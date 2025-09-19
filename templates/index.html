@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Convênio</title>
+    <!-- Inclui o CDN do Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f0f2f5; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+<div class="max-w-4xl w-full mx-auto bg-white p-6 md:p-10 rounded-2xl shadow-xl border border-gray-200">
+    
+    <!-- Cabeçalho do formulário -->
+    <div class="text-center mb-10">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-indigo-700">Cadastro de Convênio</h1>
+        <p class="mt-2 text-lg text-gray-600">Preencha os dados abaixo para registrar um novo convênio.</p>
+    </div>
+    
+    <form id="convenioForm" action="/convenio" method="post" enctype="multipart/form-data" class="space-y-8">
+        
+        <!-- Bloco 1: Dados da Conveniada -->
+        <div class="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Dados da Conveniada</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label for="nome_conveniada" class="block text-sm font-medium text-gray-700">Nome da Conveniada</label>
+                    <input type="text" id="nome_conveniada" name="nome_conveniada" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="cnpj" class="block text-sm font-medium text-gray-700">CNPJ</label>
+                    <input type="text" id="cnpj" name="cnpj" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="nome_fantasia" class="block text-sm font-medium text-gray-700">Nome Fantasia</label>
+                    <input type="text" id="nome_fantasia" name="nome_fantasia" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="area_atuacao" class="block text-sm font-medium text-gray-700">Área de Atuação</label>
+                    <input type="text" id="area_atuacao" name="area_atuacao" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="cidade" class="block text-sm font-medium text-gray-700">Cidade</label>
+                    <input type="text" id="cidade" name="cidade" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
+                    <input type="text" id="estado" name="estado" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="qtd_funcionarios" class="block text-sm font-medium text-gray-700">Quantidade de Funcionários</label>
+                    <input type="number" id="qtd_funcionarios" name="qtd_funcionarios" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="qtd_associados" class="block text-sm font-medium text-gray-700">Quantidade de Associados</label>
+                    <input type="number" id="qtd_associados" name="qtd_associados" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="qtd_sindicalizados" class="block text-sm font-medium text-gray-700">Quantidade de Sindicalizados</label>
+                    <input type="number" id="qtd_sindicalizados" name="qtd_sindicalizados" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloco 2: Dados do Responsável Legal da Conveniada -->
+        <div class="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Dados do Responsável Legal da Conveniada</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label for="responsavel_legal" class="block text-sm font-medium text-gray-700">Responsável Legal</label>
+                    <input type="text" id="responsavel_legal" name="responsavel_legal" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="cargo_responsavel" class="block text-sm font-medium text-gray-700">Cargo do Responsável</label>
+                    <input type="text" id="cargo_responsavel" name="cargo_responsavel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="email_responsavel" class="block text-sm font-medium text-gray-700">E-mail do Responsável</label>
+                    <input type="email" id="email_responsavel" name="email_responsavel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="telefone_responsavel" class="block text-sm font-medium text-gray-700">Telefone do Responsável</label>
+                    <input type="tel" id="telefone_responsavel" name="telefone_responsavel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloco 3: Dados do Convênio e Observações -->
+        <div class="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Dados do Convênio e Documentação</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="unidade_uniesp" class="block text-sm font-medium text-gray-700">Unidade UNIESP</label>
+                    <input type="text" id="unidade_uniesp" name="unidade_uniesp" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="diretor_responsavel" class="block text-sm font-medium text-gray-700">Diretor Responsável</label>
+                    <input type="text" id="diretor_responsavel" name="diretor_responsavel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="data_assinatura" class="block text-sm font-medium text-gray-700">Data de Assinatura</label>
+                    <input type="date" id="data_assinatura" name="data_assinatura" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                </div>
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                    <select id="status" name="status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Rescindido">Rescindido</option>
+                        <option value="Expirado">Expirado</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="caminho_arquivo_pdf" class="block text-sm font-medium text-gray-700">Documento do Convênio (PDF)</label>
+                    <input type="file" id="caminho_arquivo_pdf" name="caminho_arquivo_pdf" accept="application/pdf" required>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <label for="observacoes" class="block text-sm font-medium text-gray-700">Observações</label>
+                <textarea id="observacoes" name="observacoes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2"></textarea>
+            </div>
+        </div>
+
+        <div>
+            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-base font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                Cadastrar Convênio
+            </button>
+        </div>
+        
+    </form>
+</div>
+
+</body>
+</html>
