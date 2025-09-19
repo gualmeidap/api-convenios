@@ -4,6 +4,24 @@ from sqlalchemy import func
 from db import db
 from datetime import datetime
 from enum import Enum as PyEnum
+# Novos imports para autenticação
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# Modelo de Usuário para Autenticação
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256))
+    # Perfil do usuário
+    role = db.Column(db.String(20), nullable=False, default='diretor')
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 # Enum para os status do convênio
 class ConvenioStatus(PyEnum):
