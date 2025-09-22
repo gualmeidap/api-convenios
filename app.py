@@ -251,8 +251,8 @@ def update_convenio(convenio_id):
                 setattr(convenio, key, value)
         
         # Verifica se um novo arquivo foi enviado para substituição
-        if 'caminho_arquivo_pdf' in request.files:
-            arquivo = request.files['caminho_arquivo_pdf']
+        if 'documento' in request.files:
+            arquivo = request.files['documento']
             if arquivo and allowed_file(arquivo.filename):
                 # Apaga o arquivo antigo se ele existir
                 if convenio.caminho_arquivo_pdf and os.path.exists(convenio.caminho_arquivo_pdf):
@@ -266,6 +266,7 @@ def update_convenio(convenio_id):
                 setattr(convenio, 'caminho_arquivo_pdf', caminho_salvo)
 
         db.session.commit()
+        flash('Convênio atualizado com sucesso!', 'success')
         return jsonify({'message': 'Convênio atualizado com sucesso'})
 
     except Exception as e:
@@ -285,6 +286,7 @@ def delete(convenio_id):
 
     db.session.delete(convenio)
     db.session.commit()
+    flash('Convênio removido com sucesso!', 'success')
     return jsonify({'message': 'Convênio removido com sucesso'})
 
 # Bloco de inicialização do app
