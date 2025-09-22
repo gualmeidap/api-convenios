@@ -4,7 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from db import db
-from models.convenios import Convenios, ConvenioStatus, User
+from models.convenios import AuditLog, Convenios, ConvenioStatus, User
 import os
 from datetime import datetime
 import uuid
@@ -187,6 +187,18 @@ def adicionar_convenio():
         db.session.add(novoConvenio)
         db.session.commit()
 
+        # --- LOG DE AUDITORIA: Ação de Criação ---
+        log_entry = AuditLog(
+            user_id=current_user.id,
+            action='CREATE',
+            record_id=novoConvenio.id,
+            table_name='convenio',
+            details=f"Novo convênio '{nome_conveniada}' criado."
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        # --- FIM DO LOG DE AUDITORIA ---
+
         if arquivo and caminho_arquivo:
             arquivo.save(caminho_arquivo)
         
@@ -266,6 +278,19 @@ def update_convenio(convenio_id):
                 setattr(convenio, 'caminho_arquivo_pdf', caminho_salvo)
 
         db.session.commit()
+
+        # --- LOG DE AUDITORIA: Ação de Atualização ---
+        log_entry = AuditLog(
+            user_id=current_user.id,
+            action='UPDATE',
+            record_id=convenio_id,
+            table_name='convenio',
+            details=f"Convênio '{convenio.nome_conveniada}' atualizado."
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        # --- FIM DO LOG DE AUDITORIA ---
+        
         flash('Convênio atualizado com sucesso!', 'success')
         return jsonify({'message': 'Convênio atualizado com sucesso'})
 
@@ -280,6 +305,18 @@ def update_convenio(convenio_id):
 def delete(convenio_id):
     convenio = Convenios.query.get_or_404(convenio_id)
 
+    # --- LOG DE AUDITORIA: Ação de Exclusão ---
+    log_entry = AuditLog(
+        user_id=current_user.id,
+        action='DELETE',
+        record_id=convenio_id,
+        table_name='convenio',
+        details=f"Convênio '{convenio.nome_conveniada}' excluído."
+    )
+    db.session.add(log_entry)
+    db.session.commit()
+    # --- FIM DO LOG DE AUDITORIA ---
+
     # Apaga o arquivo associado antes de excluir o registro do banco
     if convenio.caminho_arquivo_pdf and os.path.exists(convenio.caminho_arquivo_pdf):
         os.remove(convenio.caminho_arquivo_pdf)
@@ -288,6 +325,14 @@ def delete(convenio_id):
     db.session.commit()
     flash('Convênio removido com sucesso!', 'success')
     return jsonify({'message': 'Convênio removido com sucesso'})
+
+# Nova rota para visualizar os logs de auditoria
+@app.route('/logs_auditoria', methods=['GET'])
+@login_required
+@role_required(['admin'])
+def visualizar_logs():
+    logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).all()
+    return jsonify([log.as_dict() for log in logs])
 
 # Bloco de inicialização do app
 if __name__ == '__main__':

@@ -80,3 +80,26 @@ class Convenios(db.Model):
             'criado_em': self.criado_em.isoformat(),
             'atualizado_em': self.atualizado_em.isoformat()
         }
+    
+# Modelo de Dados para o Log de Auditoria
+class AuditLog(db.Model):
+    __tablename__ = 'audit_log'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(255), nullable=False)  # O ID do usuário que fez a alteração
+    action = db.Column(db.String(50), nullable=False)     # Ação realizada (ex: 'CREATE', 'UPDATE', 'DELETE')
+    record_id = db.Column(UUID(as_uuid=True), nullable=False) # O ID do registro (convênio) que foi alterado
+    table_name = db.Column(db.String(255), nullable=False) # O nome da tabela alterada (sempre 'convenio' neste caso)
+    timestamp = db.Column(db.DateTime(timezone=True), server_default=func.now()) # A data e hora da ação
+    details = db.Column(db.String(1024), nullable=True) # Detalhes adicionais sobre a mudança
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'action': self.action,
+            'record_id': str(self.record_id),
+            'table_name': self.table_name,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'details': self.details
+        }
