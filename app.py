@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import Flask, flash, redirect, render_template, request, jsonify, url_for
+from flask import Flask, flash, redirect, render_template, request, jsonify, send_from_directory, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
@@ -198,6 +198,11 @@ def adicionar_convenio():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/uploads/<path:filename>')
+@login_required
+def download_file(filename):
+    # Retorna o arquivo solicitado do diretório de uploads
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # Listar todos os Convênios
 @app.route('/convenio', methods=['GET'])
