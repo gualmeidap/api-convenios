@@ -121,6 +121,25 @@ def get_convenios_api():
     convenios_list = [convenio.as_dict() for convenio in convenios]
     return jsonify(convenios_list)
 
+# Rota da API para buscar apenas os usuários com perfil de 'diretor'
+# Esta rota não é mais necessária já que o campo será uma string, mas a manteremos para a próxima etapa.
+@app.route('/users/diretores_api', methods=['GET'])
+@login_required
+@role_required(['admin'])
+def get_diretores_api():
+    diretores = User.query.filter_by(role='diretor').all()
+    return jsonify([{'id': diretor.id, 'username': diretor.username} for diretor in diretores])
+
+# Função simulada para o envio de e-mail.
+def mock_send_email(to_email, subject, body):
+    print(f"--- SIMULANDO O ENVIO DE E-MAIL ---")
+    print(f"Para: {to_email}")
+    print(f"Assunto: {subject}")
+    print(f"Corpo: {body}")
+    print(f"------------------------------------")
+    # Um código real para envio de e-mail seria inserido aqui.
+    return True
+
 # Cadastrar Convênio
 @app.route('/convenio', methods=['POST'])
 @login_required
@@ -143,6 +162,7 @@ def adicionar_convenio():
         telefone_responsavel = request.form.get('telefone_responsavel')
         unidade_uniesp = request.form.get('unidade_uniesp')
         diretor_responsavel = request.form.get('diretor_responsavel')
+        diretor_responsavel_email = request.form.get('diretor_responsavel_email')
         data_assinatura_str = request.form.get('data_assinatura')
         observacoes = request.form.get('observacoes')
         status_str = request.form.get('status')
@@ -178,6 +198,7 @@ def adicionar_convenio():
             telefone_responsavel=telefone_responsavel,
             unidade_uniesp=unidade_uniesp,
             diretor_responsavel=diretor_responsavel,
+            diretor_responsavel_email=diretor_responsavel_email,
             data_assinatura=data_assinatura,
             observacoes=observacoes,
             caminho_arquivo_pdf=caminho_arquivo,
@@ -186,6 +207,15 @@ def adicionar_convenio():
         
         db.session.add(novoConvenio)
         db.session.commit()
+
+        # --- Lógica de Envio de E-mail ---
+        if diretor_responsavel_email:
+            assunto = f"Nova Parceria Cadastrada - {nome_conveniada}"
+            corpo = f"""Prezado(a) Diretor(a).\n\n
+            Informamos que a unidade {unidade_uniesp} firmou uma nova parceria com a empresa {nome_conveniada},
+            com benefícios educacionais válidos a partir de {data_assinatura}."""
+            mock_send_email(diretor_responsavel_email, assunto, corpo)
+        # --- Fim da Lógica de E-mail ---
 
         # --- LOG DE AUDITORIA: Ação de Criação ---
         log_entry = AuditLog(

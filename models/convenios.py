@@ -13,6 +13,7 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(256))
     # Perfil do usuário
     role = db.Column(db.String(20), nullable=False, default='diretor')
@@ -48,6 +49,7 @@ class Convenios(db.Model):
     telefone_responsavel = db.Column(db.String(255), nullable=False)
     unidade_uniesp = db.Column(db.String(255), nullable=False)
     diretor_responsavel = db.Column(db.String(255), nullable=False)
+    diretor_responsavel_email = db.Column(db.String(255), nullable=True)
     data_assinatura = db.Column(db.Date, nullable=False)
     observacoes = db.Column(TEXT(), nullable=True)
     caminho_arquivo_pdf = db.Column(db.String(512), nullable=True)
@@ -73,6 +75,7 @@ class Convenios(db.Model):
             'telefone_responsavel': self.telefone_responsavel,
             'unidade_uniesp': self.unidade_uniesp,
             'diretor_responsavel': self.diretor_responsavel,
+            'diretor_responsavel_email': self.diretor_responsavel_email,
             'data_assinatura': self.data_assinatura.isoformat() if self.data_assinatura else None,
             'observacoes': self.observacoes,
             'caminho_arquivo_pdf': self.caminho_arquivo_pdf,
