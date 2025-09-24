@@ -189,7 +189,7 @@ def adicionar_convenio():
 
         # --- LOG DE AUDITORIA: Ação de Criação ---
         log_entry = AuditLog(
-            user_id=current_user.id,
+            user_id=current_user,
             action='CREATE',
             record_id=novoConvenio.id,
             table_name='convenio',
@@ -281,7 +281,7 @@ def update_convenio(convenio_id):
 
         # --- LOG DE AUDITORIA: Ação de Atualização ---
         log_entry = AuditLog(
-            user_id=current_user.id,
+            user_id=current_user,
             action='UPDATE',
             record_id=convenio_id,
             table_name='convenio',
@@ -307,7 +307,7 @@ def delete(convenio_id):
 
     # --- LOG DE AUDITORIA: Ação de Exclusão ---
     log_entry = AuditLog(
-        user_id=current_user.id,
+        user_id=current_user,
         action='DELETE',
         record_id=convenio_id,
         table_name='convenio',
@@ -330,9 +330,16 @@ def delete(convenio_id):
 @app.route('/logs_auditoria', methods=['GET'])
 @login_required
 @role_required(['admin'])
-def visualizar_logs():
+def get_logs_auditoria():
     logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).all()
     return jsonify([log.as_dict() for log in logs])
+
+# Nova rota para servir o HTML de logs
+@app.route('/visualizar_logs')
+@login_required
+@role_required(['admin'])
+def visualizar_logs():
+    return render_template('visualizador_logs_auditoria.html')
 
 # Bloco de inicialização do app
 if __name__ == '__main__':
