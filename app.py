@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 import uuid
 from werkzeug.utils import secure_filename
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 
@@ -19,6 +20,16 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'pdf'}
 # Chave secreta para a sessão (necessária para o Flask-Login)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'uma-chave-secreta-muito-segura')
+
+# --- Configuração do Flask-Mail (NOVO) ---
+app.config['MAIL_SERVER'] = 'smtp.office365.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('FLASK_MAIL_USERNAME', 'convenios.uniesp@uniesp.edu.br')
+app.config['MAIL_PASSWORD'] = os.environ.get('FLASK_MAIL_PASSWORD', 'mudar@123')
+
+mail = Mail(app)
+# --- Fim da configuração do Flask-Mail ---
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -76,15 +87,16 @@ def logout():
 @role_required(['admin'])
 def register():
     if request.method == 'POST':
+        email = request.form.get('email')
         username = request.form.get('username')
         password = request.form.get('password')
         role = request.form.get('role')
         
-        if User.query.filter_by(username=username).first():
-            flash("Nome de usuário já existe.")
+        if User.query.filter_by(email=email).first():
+            flash("Endereço de e-mail já registrado.")
             return redirect(url_for('register'))
         
-        new_user = User(username=username, role=role)
+        new_user = User(email=email, username=username, role=role)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
@@ -130,15 +142,19 @@ def get_diretores_api():
     diretores = User.query.filter_by(role='diretor').all()
     return jsonify([{'id': diretor.id, 'username': diretor.username} for diretor in diretores])
 
-# Função simulada para o envio de e-mail.
-def mock_send_email(to_email, subject, body):
-    print(f"--- SIMULANDO O ENVIO DE E-MAIL ---")
-    print(f"Para: {to_email}")
-    print(f"Assunto: {subject}")
-    print(f"Corpo: {body}")
-    print(f"------------------------------------")
-    # Um código real para envio de e-mail seria inserido aqui.
-    return True
+# Função para enviar e-mail (NOVO)
+def send_email(to_email, subject, body):
+    try:
+        msg = Message(subject,
+                      sender=app.config['MAIL_USERNAME'],
+                      recipients=[to_email])
+        msg.body = body
+        mail.send(msg)
+        print(f"E-mail enviado com sucesso para {to_email}.")
+        return True
+    except Exception as e:
+        print(f"Erro ao enviar e-mail: {e}")
+        return False
 
 # Cadastrar Convênio
 @app.route('/convenio', methods=['POST'])
@@ -211,15 +227,21 @@ def adicionar_convenio():
         # --- Lógica de Envio de E-mail ---
         if diretor_responsavel_email:
             assunto = f"Nova Parceria Cadastrada - {nome_conveniada}"
-            corpo = f"""Prezado(a) Diretor(a).\n\n
-            Informamos que a unidade {unidade_uniesp} firmou uma nova parceria com a empresa {nome_conveniada},
-            com benefícios educacionais válidos a partir de {data_assinatura}."""
-            mock_send_email(diretor_responsavel_email, assunto, corpo)
+            corpo = f"""Prezado(a) Diretor(a),\n\n
+Informamos que a unidade {unidade_uniesp} firmou nova parceria com a empresa {nome_conveniada},
+com benefícios educacionais válidos a partir de {data_assinatura.strftime('%d/%m/%Y')}.
+
+Termo anexado: https://uniespvestibular.com.br/convenios/
+
+
+Atenciosamente,
+Equipe UNIESP"""
+            send_email(diretor_responsavel_email, assunto, corpo)
         # --- Fim da Lógica de E-mail ---
 
         # --- LOG DE AUDITORIA: Ação de Criação ---
         log_entry = AuditLog(
-            user_id=current_user,
+            user=current_user,
             action='CREATE',
             record_id=novoConvenio.id,
             table_name='convenio',
@@ -311,7 +333,7 @@ def update_convenio(convenio_id):
 
         # --- LOG DE AUDITORIA: Ação de Atualização ---
         log_entry = AuditLog(
-            user_id=current_user,
+            user=current_user,
             action='UPDATE',
             record_id=convenio_id,
             table_name='convenio',
@@ -337,7 +359,7 @@ def delete(convenio_id):
 
     # --- LOG DE AUDITORIA: Ação de Exclusão ---
     log_entry = AuditLog(
-        user_id=current_user,
+        user=current_user,
         action='DELETE',
         record_id=convenio_id,
         table_name='convenio',
