@@ -105,6 +105,27 @@ def register():
     
     return render_template('register.html')
 
+# --- Nova Rota para a página de visualização de usuários ---
+@app.route('/visualizar_usuarios')
+@login_required
+@role_required(['admin'])
+def visualizar_usuarios():
+    return render_template('visualizar_usuarios.html')
+
+# --- Nova Rota de API para obter todos os usuários ---
+@app.route('/users_api', methods=['GET'])
+@login_required
+@role_required(['admin'])
+def get_users_api():
+    users = User.query.all()
+    # Retorna uma lista de dicionários com os dados dos usuários
+    return jsonify([{
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'role': user.role
+    } for user in users])
+
 # Função auxiliar para verificar a extensão do arquivo
 def allowed_file(filename):
     return '.' in filename and \

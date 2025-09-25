@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizar Usuários</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+        <h1 class="text-3xl font-extrabold text-indigo-700 mb-6 text-center">Usuários Registrados</h1>
+        <div class="mb-6 flex justify-center">
+            <input type="text" id="searchInput" placeholder="Pesquisar por nome, e-mail ou função..." class="w-full max-w-xl p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200">
+        </div>
+
+        <div class="overflow-x-auto rounded-xl">
+            <table class="min-w-full divide-y divide-gray-200 shadow-md rounded-xl">
+                <thead class="bg-indigo-600 text-white">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider rounded-tl-xl">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Nome de Usuário</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">E-mail</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider rounded-tr-xl">Função</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Os dados dos usuários serão inseridos aqui pelo JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('userTableBody');
+            const searchInput = document.getElementById('searchInput');
+            let usersData = [];
+
+            // Função para buscar e exibir os usuários
+            async function fetchUsers() {
+                try {
+                    const response = await fetch('/users_api');
+                    if (!response.ok) {
+                        throw new Error('Falha ao carregar os usuários.');
+                    }
+                    usersData = await response.json();
+                    renderTable(usersData);
+                } catch (error) {
+                    console.error('Erro:', error);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">Erro ao carregar os dados.</td>`;
+                    tableBody.appendChild(row);
+                }
+            }
+
+            // Função para renderizar a tabela com base nos dados
+            function renderTable(data) {
+                tableBody.innerHTML = ''; // Limpa a tabela antes de renderizar
+                if (data.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">Nenhum usuário encontrado.</td>`;
+                    tableBody.appendChild(row);
+                } else {
+                    data.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.classList.add('hover:bg-gray-50');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.id}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.username}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.role}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            }
+
+            // Função para filtrar os usuários com base no termo de busca
+            function filterUsers() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filteredUsers = usersData.filter(user => {
+                    return user.username.toLowerCase().includes(searchTerm) ||
+                           user.email.toLowerCase().includes(searchTerm) ||
+                           user.role.toLowerCase().includes(searchTerm);
+                });
+                renderTable(filteredUsers);
+            }
+
+            // Adiciona o evento de input para a pesquisa em tempo real
+            searchInput.addEventListener('input', filterUsers);
+
+            // Carrega os dados na inicialização da página
+            fetchUsers();
+        });
+    </script>
+</body>
+</html>
