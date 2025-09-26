@@ -21,7 +21,7 @@ ALLOWED_EXTENSIONS = {'pdf'}
 # Chave secreta para a sessão (necessária para o Flask-Login)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'uma-chave-secreta-muito-segura')
 
-# --- Configuração do Flask-Mail (NOVO) ---
+# --- Configuração do Flask-Mail ---
 app.config['MAIL_SERVER'] = 'smtp.office365.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -125,6 +125,74 @@ def get_users_api():
         'email': user.email,
         'role': user.role
     } for user in users])
+
+# --- Nova rota para editar um usuário ---
+@app.route('/users/<int:user_id>', methods=['PATCH'])
+@login_required
+@role_required(['admin'])
+def update_user_api(user_id):
+    user = User.query.get_or_404(user_id)
+    data = request.json
+    
+    try:
+        # Verifica se o email já existe para outro usuário
+        if 'email' in data and data['email'] != user.email:
+            if User.query.filter_by(email=data['email']).first():
+                return jsonify({'error': 'Este e-mail já está em uso.'}), 400
+            
+        if 'username' in data:
+            user.username = data['username']
+        if 'email' in data:
+            user.email = data['email']
+        if 'role' in data:
+            user.role = data['role']
+        if 'password' in data and data['password']:
+            user.set_password(data['password'])
+        
+        db.session.commit()
+        
+        # Log de auditoria para a edição
+        log_entry = AuditLog(
+            user=current_user,
+            action='UPDATE',
+            record_id=str(user_id),
+            table_name='user',
+            details=f"Usuário '{user.username}' editado."
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        
+        return jsonify({'message': 'Usuário atualizado com sucesso!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# --- Nova rota para excluir um usuário ---
+@app.route('/users/<int:user_id>', methods=['DELETE'])
+@login_required
+@role_required(['admin'])
+def delete_user_api(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        
+        # Log de auditoria para a exclusão
+        log_entry = AuditLog(
+            user=current_user,
+            action='DELETE',
+            record_id=str(user_id),
+            table_name='user',
+            details=f"Usuário '{user.username}' excluído."
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        
+        return jsonify({'message': 'Usuário removido com sucesso!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 # Função auxiliar para verificar a extensão do arquivo
 def allowed_file(filename):

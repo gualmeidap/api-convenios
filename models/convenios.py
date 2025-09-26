@@ -94,8 +94,8 @@ class AuditLog(db.Model):
     user = db.relationship('User', backref=db.backref('audit_logs', lazy=True))
 
     action = db.Column(db.String(50), nullable=False)     # Ação realizada (ex: 'CREATE', 'UPDATE', 'DELETE')
-    record_id = db.Column(UUID(as_uuid=True), nullable=False) # O ID do registro (convênio) que foi alterado
-    table_name = db.Column(db.String(255), nullable=False) # O nome da tabela alterada (sempre 'convenio' neste caso)
+    record_id = db.Column(db.String(100), nullable=False) # O ID do registro de convênio/usuário que foi alterado
+    table_name = db.Column(db.String(255), nullable=False) # O nome da tabela alterada 
     timestamp = db.Column(db.DateTime(timezone=True), server_default=func.now()) # A data e hora da ação
     details = db.Column(db.String(1024), nullable=True) # Detalhes adicionais sobre a mudança
 
