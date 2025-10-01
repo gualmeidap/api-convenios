@@ -1,24 +1,21 @@
-from functools import wraps
-from flask import Flask, flash, redirect, render_template, request, jsonify, send_from_directory, url_for
+from flask import Flask, redirect, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from db import db
 from models.convenios import AuditLog, Convenios, ConvenioStatus, User
 import os
 from datetime import datetime
-import uuid
-from werkzeug.utils import secure_filename
 from flask_mail import Mail, Message
+from routes.routes_user import user_bp
+from routes.routes_convenio import convenio_bp
 
 app = Flask(__name__)
 
+# --- Configurações Básicas ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:5432/termos'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads') 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-ALLOWED_EXTENSIONS = {'pdf'}
-# Chave secreta para a sessão (necessária para o Flask-Login)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'uma-chave-secreta-muito-segura')
 
 # --- Configuração do Flask-Mail ---
@@ -27,10 +24,9 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('FLASK_MAIL_USERNAME', 'convenios.uniesp@uniesp.edu.br')
 app.config['MAIL_PASSWORD'] = os.environ.get('FLASK_MAIL_PASSWORD', 'mudar@123')
-
 mail = Mail(app)
-# --- Fim da configuração do Flask-Mail ---
 
+# --- Inicialização de Extensões ---
 db.init_app(app)
 migrate = Migrate(app, db)
 
@@ -41,457 +37,47 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
+    # Função para carregar o usuário pelo ID, usada pelo Flask-Login
     return User.query.get(int(user_id))
 
-# Decorador personalizado para verificar o perfil do usuário
-def role_required(roles):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if current_user.role not in roles:
-                flash("Você não tem permissão para acessar esta página.")
-                return redirect(url_for('visualizar_convenios'))
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
-
-# --- Rotas para Autenticação ---
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('visualizar_convenios'))
-    
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        
-        if user and user.check_password(password):
-            login_user(user)
-            return redirect(url_for('visualizar_convenios'))
-        else:
-            flash("Usuário ou senha inválidos.")
-            return redirect(url_for('login'))
-    
-    # Formulário de login simples
-    return render_template('login.html')
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-@app.route('/register', methods=['GET', 'POST'])
-@login_required
-@role_required(['admin'])
-def register():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        username = request.form.get('username')
-        password = request.form.get('password')
-        role = request.form.get('role')
-        
-        if User.query.filter_by(email=email).first():
-            flash("Endereço de e-mail já registrado.")
-            return redirect(url_for('register'))
-        
-        new_user = User(email=email, username=username, role=role)
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
-        flash(f"Usuário {username} criado com sucesso!")
-        return redirect(url_for('visualizar_convenios'))
-    
-    return render_template('register.html')
-
-# --- Nova Rota para a página de visualização de usuários ---
-@app.route('/visualizar_usuarios')
-@login_required
-@role_required(['admin'])
-def visualizar_usuarios():
-    return render_template('visualizar_usuarios.html')
-
-# --- Nova Rota de API para obter todos os usuários ---
-@app.route('/users_api', methods=['GET'])
-@login_required
-@role_required(['admin'])
-def get_users_api():
-    users = User.query.all()
-    # Retorna uma lista de dicionários com os dados dos usuários
-    return jsonify([{
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'role': user.role
-    } for user in users])
-
-# --- Nova rota para editar um usuário ---
-@app.route('/users/<int:user_id>', methods=['PATCH'])
-@login_required
-@role_required(['admin'])
-def update_user_api(user_id):
-    user = User.query.get_or_404(user_id)
-    data = request.json
-    
-    try:
-        # Verifica se o email já existe para outro usuário
-        if 'email' in data and data['email'] != user.email:
-            if User.query.filter_by(email=data['email']).first():
-                return jsonify({'error': 'Este e-mail já está em uso.'}), 400
-            
-        if 'username' in data:
-            user.username = data['username']
-        if 'email' in data:
-            user.email = data['email']
-        if 'role' in data:
-            user.role = data['role']
-        if 'password' in data and data['password']:
-            user.set_password(data['password'])
-        
-        db.session.commit()
-        
-        # Log de auditoria para a edição
-        log_entry = AuditLog(
-            user=current_user,
-            action='UPDATE',
-            record_id=str(user_id),
-            table_name='user',
-            details=f"Usuário '{user.username}' editado."
-        )
-        db.session.add(log_entry)
-        db.session.commit()
-        
-        return jsonify({'message': 'Usuário atualizado com sucesso!'})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-# --- Nova rota para excluir um usuário ---
-@app.route('/users/<int:user_id>', methods=['DELETE'])
-@login_required
-@role_required(['admin'])
-def delete_user_api(user_id):
-    user = User.query.get_or_404(user_id)
-    
-    try:
-        db.session.delete(user)
-        db.session.commit()
-        
-        # Log de auditoria para a exclusão
-        log_entry = AuditLog(
-            user=current_user,
-            action='DELETE',
-            record_id=str(user_id),
-            table_name='user',
-            details=f"Usuário '{user.username}' excluído."
-        )
-        db.session.add(log_entry)
-        db.session.commit()
-        
-        return jsonify({'message': 'Usuário removido com sucesso!'})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-# Função auxiliar para verificar a extensão do arquivo
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# Nova rota para servir o formulário HTML
+# --- Rota Raiz Principal ---
+# Redireciona a rota '/' (raiz) para a página de visualização de convênios, que está no Blueprint de convênios
 @app.route('/')
 @login_required
-@role_required(['admin', 'diretor'])
-def index():
-    return render_template('index.html')
+def root():
+    return redirect(url_for('convenio_bp.visualizar_convenios'))
 
-# Nova rota para visualizar os convênios (servindo o HTML)
-@app.route('/visualizar')
-@login_required
-@role_required(['admin', 'diretor'])
-def visualizar_convenios():
-    return render_template('visualizar_convenios.html')
-
-# Nova rota da API para obter os dados dos convênios em JSON
-@app.route('/convenios_api', methods=['GET'])
-@login_required
-@role_required(['admin', 'diretor'])
-def get_convenios_api():
-    convenios = Convenios.query.all()
-    convenios_list = [convenio.as_dict() for convenio in convenios]
-    return jsonify(convenios_list)
-
-# Rota da API para buscar apenas os usuários com perfil de 'diretor'
-# Esta rota não é mais necessária já que o campo será uma string, mas a manteremos para a próxima etapa.
-@app.route('/users/diretores_api', methods=['GET'])
-@login_required
-@role_required(['admin'])
-def get_diretores_api():
-    diretores = User.query.filter_by(role='diretor').all()
-    return jsonify([{'id': diretor.id, 'username': diretor.username} for diretor in diretores])
-
-# Função para enviar e-mail (NOVO)
-def send_email(to_email, subject, body):
-    try:
-        msg = Message(subject,
-                      sender=app.config['MAIL_USERNAME'],
-                      recipients=[to_email])
-        msg.body = body
-        mail.send(msg)
-        print(f"E-mail enviado com sucesso para {to_email}.")
-        return True
-    except Exception as e:
-        print(f"Erro ao enviar e-mail: {e}")
-        return False
-
-# Cadastrar Convênio
-@app.route('/convenio', methods=['POST'])
-@login_required
-@role_required(['admin', 'diretor'])
-def adicionar_convenio():
-    try:
-        # Obtém os dados de texto do formulário (request.form)
-        nome_conveniada = request.form.get('nome_conveniada')
-        cnpj = request.form.get('cnpj')
-        nome_fantasia = request.form.get('nome_fantasia')
-        cidade = request.form.get('cidade')
-        estado = request.form.get('estado')
-        area_atuacao = request.form.get('area_atuacao')
-        qtd_funcionarios = request.form.get('qtd_funcionarios', type=int)
-        qtd_associados = request.form.get('qtd_associados', type=int)
-        qtd_sindicalizados = request.form.get('qtd_sindicalizados', type=int)
-        responsavel_legal = request.form.get('responsavel_legal')
-        cargo_responsavel = request.form.get('cargo_responsavel')
-        email_responsavel = request.form.get('email_responsavel')
-        telefone_responsavel = request.form.get('telefone_responsavel')
-        unidade_uniesp = request.form.get('unidade_uniesp')
-        diretor_responsavel = request.form.get('diretor_responsavel')
-        diretor_responsavel_email = request.form.get('diretor_responsavel_email')
-        data_assinatura_str = request.form.get('data_assinatura')
-        observacoes = request.form.get('observacoes')
-        status_str = request.form.get('status')
-        
-        # Converte a string de data para um objeto datetime.date
-        data_assinatura = datetime.strptime(data_assinatura_str, '%Y-%m-%d').date() if data_assinatura_str else None
-        
-        # Converte a string de status para o Enum
-        status = ConvenioStatus(status_str) if status_str in [e.value for e in ConvenioStatus] else None
-        
-        # Prepara o arquivo, mas NÃO o salva ainda
-        arquivo = request.files.get('caminho_arquivo_pdf')
-        caminho_arquivo = None
-        if arquivo and allowed_file(arquivo.filename):
-            nome_seguro = secure_filename(arquivo.filename)
-            nome_arquivo_unico = str(uuid.uuid4()) + "_" + nome_seguro
-            caminho_arquivo = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo_unico)
-
-        # Cria o novo objeto Convenios com todos os dados
-        novoConvenio = Convenios(
-            nome_conveniada=nome_conveniada,
-            cnpj=cnpj,
-            nome_fantasia=nome_fantasia,
-            cidade=cidade,
-            estado=estado,
-            area_atuacao=area_atuacao,
-            qtd_funcionarios=qtd_funcionarios,
-            qtd_associados=qtd_associados,
-            qtd_sindicalizados=qtd_sindicalizados,
-            responsavel_legal=responsavel_legal,
-            cargo_responsavel=cargo_responsavel,
-            email_responsavel=email_responsavel,
-            telefone_responsavel=telefone_responsavel,
-            unidade_uniesp=unidade_uniesp,
-            diretor_responsavel=diretor_responsavel,
-            diretor_responsavel_email=diretor_responsavel_email,
-            data_assinatura=data_assinatura,
-            observacoes=observacoes,
-            caminho_arquivo_pdf=caminho_arquivo,
-            status=status
-        )
-        
-        db.session.add(novoConvenio)
-        db.session.commit()
-
-        # --- Lógica de Envio de E-mail ---
-        if diretor_responsavel_email:
-            assunto = f"Nova Parceria Cadastrada - {nome_conveniada}"
-            corpo = f"""Prezado(a) Diretor(a),\n\n
-Informamos que a unidade {unidade_uniesp} firmou nova parceria com a empresa {nome_conveniada},
-com benefícios educacionais válidos a partir de {data_assinatura.strftime('%d/%m/%Y')}.
-
-Termo anexado: https://uniespvestibular.com.br/convenios/
-
-
-Atenciosamente,
-Equipe UNIESP"""
-            send_email(diretor_responsavel_email, assunto, corpo)
-        # --- Fim da Lógica de E-mail ---
-
-        # --- LOG DE AUDITORIA: Ação de Criação ---
-        log_entry = AuditLog(
-            user=current_user,
-            action='CREATE',
-            record_id=novoConvenio.id,
-            table_name='convenio',
-            details=f"Novo convênio '{nome_conveniada}' criado."
-        )
-        db.session.add(log_entry)
-        db.session.commit()
-        # --- FIM DO LOG DE AUDITORIA ---
-
-        if arquivo and caminho_arquivo:
-            arquivo.save(caminho_arquivo)
-        
-        # Redireciona o usuário para a página de visualização após o sucesso
-        flash('Convênio inserido com sucesso!')
-        return redirect(url_for('visualizar_convenios'))
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/uploads/<path:filename>')
-@login_required
-def download_file(filename):
-    # Retorna o arquivo solicitado do diretório de uploads
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-# Listar todos os Convênios
-@app.route('/convenio', methods=['GET'])
-@login_required
-@role_required(['admin', 'diretor'])
-def get_all():
-    convenios = Convenios.query.all()
-    return jsonify([convenio.as_dict() for convenio in convenios])
-
-# Listar Convênio por id
-@app.route('/convenio/<uuid:convenio_id>', methods=['GET'])
-@login_required
-@role_required(['admin', 'diretor'])
-def get_convenio(convenio_id):
-    convenio = Convenios.query.get_or_404(convenio_id)
-    return jsonify(convenio.as_dict())
-
-# Editar Convênio (por id)
-@app.route('/convenio/<uuid:convenio_id>', methods=['PATCH', 'POST'])
-@login_required
-@role_required(['admin'])
-def update_convenio(convenio_id):
-    convenio = Convenios.query.get_or_404(convenio_id)
-    
-    try:
-        # Se a requisição for JSON (apenas dados de texto)
-        if request.is_json:
-            data = request.get_json()
-        # Se for um formulário multipart (dados e/ou arquivo)
-        else:
-            data = request.form
-        
-        # Itera sobre os dados recebidos para atualizar o convênio
-        for key, value in data.items():
-            if key == 'data_assinatura':
-                if value:
-                    setattr(convenio, key, datetime.strptime(value, '%Y-%m-%d').date())
-                else:
-                    setattr(convenio, key, None)
-            elif key == 'status':
-                if value in [e.value for e in ConvenioStatus]:
-                    setattr(convenio, key, ConvenioStatus(value))
-            elif key in ['qtd_funcionarios', 'qtd_associados', 'qtd_sindicalizados']:
-                setattr(convenio, key, int(value))
-            else:
-                setattr(convenio, key, value)
-        
-        # Verifica se um novo arquivo foi enviado para substituição
-        if 'documento' in request.files:
-            arquivo = request.files['documento']
-            if arquivo and allowed_file(arquivo.filename):
-                # Apaga o arquivo antigo se ele existir
-                if convenio.caminho_arquivo_pdf and os.path.exists(convenio.caminho_arquivo_pdf):
-                    os.remove(convenio.caminho_arquivo_pdf)
-
-                # Salva o novo arquivo
-                nome_seguro = secure_filename(arquivo.filename)
-                nome_arquivo_unico = str(uuid.uuid4()) + "_" + nome_seguro
-                caminho_salvo = os.path.join(app.config['UPLOAD_FOLDER'], nome_arquivo_unico)
-                arquivo.save(caminho_salvo)
-                setattr(convenio, 'caminho_arquivo_pdf', caminho_salvo)
-
-        db.session.commit()
-
-        # --- LOG DE AUDITORIA: Ação de Atualização ---
-        log_entry = AuditLog(
-            user=current_user,
-            action='UPDATE',
-            record_id=convenio_id,
-            table_name='convenio',
-            details=f"Convênio '{convenio.nome_conveniada}' atualizado."
-        )
-        db.session.add(log_entry)
-        db.session.commit()
-        # --- FIM DO LOG DE AUDITORIA ---
-        
-        flash('Convênio atualizado com sucesso!', 'success')
-        return jsonify({'message': 'Convênio atualizado com sucesso'})
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-# Excluir Convênio (por id)
-@app.route('/convenio/<uuid:convenio_id>', methods=['DELETE'])
-@login_required
-@role_required(['admin'])
-def delete(convenio_id):
-    convenio = Convenios.query.get_or_404(convenio_id)
-
-    # --- LOG DE AUDITORIA: Ação de Exclusão ---
-    log_entry = AuditLog(
-        user=current_user,
-        action='DELETE',
-        record_id=convenio_id,
-        table_name='convenio',
-        details=f"Convênio '{convenio.nome_conveniada}' excluído."
-    )
-    db.session.add(log_entry)
-    db.session.commit()
-    # --- FIM DO LOG DE AUDITORIA ---
-
-    # Apaga o arquivo associado antes de excluir o registro do banco
-    if convenio.caminho_arquivo_pdf and os.path.exists(convenio.caminho_arquivo_pdf):
-        os.remove(convenio.caminho_arquivo_pdf)
-
-    db.session.delete(convenio)
-    db.session.commit()
-    flash('Convênio removido com sucesso!', 'success')
-    return jsonify({'message': 'Convênio removido com sucesso'})
-
-# Nova rota para visualizar os logs de auditoria
-@app.route('/logs_auditoria', methods=['GET'])
-@login_required
-@role_required(['admin'])
-def get_logs_auditoria():
-    logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).all()
-    return jsonify([log.as_dict() for log in logs])
-
-# Nova rota para servir o HTML de logs
-@app.route('/visualizar_logs')
-@login_required
-@role_required(['admin'])
-def visualizar_logs():
-    return render_template('visualizador_logs_auditoria.html')
+# --- Registro dos BLueprints ---
+# Registra as rotas de usuário e autenticação (login, register, users_api)
+app.register_blueprint(user_bp) 
+# Registra as rotas de convênios (adicionar_convenio, visualizar, convenios_api, logs)
+app.register_blueprint(convenio_bp)
 
 # Bloco de inicialização do app
 if __name__ == '__main__':
     with app.app_context():
-        # Verifique se o usuário 'admin' já existe para evitar erros
-        if not User.query.filter_by(username='admin').first():
+        admin_user = User.query.filter_by(username='admin').first()
+        
+        # 1. Cria o usuário 'admin' se ele não existir
+        if not admin_user:
             print("Criando usuário 'admin' padrão...")
-            admin_user = User(username='admin', role='admin')
+            # Adiciona o campo 'email' que é necessário para a autenticação/recuperação de senha.
+            # Presume-se que o modelo User tenha o campo 'email'.
+            admin_user = User(username='admin', role='admin', email='admin@uniesp.edu.br')
             admin_user.set_password('123456')
             db.session.add(admin_user)
             db.session.commit()
-            print("Usuário 'admin' criado com sucesso.")
+            print("Usuário 'admin' criado com sucesso com email: admin@uniesp.edu.br")
+        
+        # 2. Se o usuário 'admin' existir, mas estiver sem e-mail, atualiza
+        else:
+            # Tenta acessar o atributo 'email'. Se o modelo User não tiver este atributo,
+            # esta linha pode falhar na inicialização do app.
+            if not hasattr(admin_user, 'email') or not admin_user.email:
+                 print("Atualizando email do usuário 'admin' existente...")
+                 # Tenta adicionar/atualizar o campo email
+                 setattr(admin_user, 'email', 'admin@uniesp.edu.br')
+                 db.session.commit()
+                 print("Email do usuário 'admin' atualizado com sucesso para: admin@uniesp.edu.br")
     
     app.run(debug=True, port=8080, host='0.0.0.0')

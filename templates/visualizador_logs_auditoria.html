@@ -3,100 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logs de Auditoria</title>
+    <title>Logs de Auditoria do Sistema</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f0f2f5;
+            color: #333;
         }
-        .container {
-            max-width: 90%;
-        }
-        .table-responsive {
-            overflow-x: auto;
-        }
-        th, td {
-            white-space: nowrap;
-        }
+        /* Estilos de Ação */
+        .log-CREATE { background-color: #d1fae5; color: #059669; } /* Verde - Criação */
+        .log-UPDATE { background-color: #e0f2fe; color: #0069e0; } /* Azul - Atualização */
+        .log-DELETE { background-color: #fee2e2; color: #ef4444; } /* Vermelho - Exclusão */
+        .log-LOGIN { background-color: #fffbeb; color: #d97706; } /* Amarelo - Login */
     </style>
 </head>
-<body class="bg-gray-100 p-4 sm:p-8">
+<body class="p-4 md:p-8">
+    <div class="max-w-screen-xl mx-auto bg-white rounded-3xl shadow-2xl p-6 md:p-10">
+        <h1 class="text-4xl font-extrabold text-indigo-700 mb-8 text-center">Logs de Auditoria do Sistema</h1>
+        <p class="text-gray-600 mb-6 text-center">Este painel exibe um histórico completo de todas as ações importantes realizadas por usuários administradores no sistema.</p>
 
-    <div class="container mx-auto p-6 bg-white rounded-2xl shadow-xl">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Logs de Auditoria</h1>
-
-        <!-- Loading Indicator -->
-        <div id="loading-indicator" class="flex justify-center items-center p-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            <span class="ml-4 text-gray-500">Carregando logs...</span>
+        <!-- Filtros -->
+        <div class="mb-8 flex flex-col md:flex-row gap-4 justify-between items-center bg-gray-50 p-4 rounded-xl shadow-inner">
+            <input type="text" id="searchInput" placeholder="Pesquisar (Usuário, Tabela, Detalhe...)" 
+                   class="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200">
+            
+            <select id="actionFilter" class="w-full md:w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">Filtrar por Ação</option>
+                <option value="CREATE">CREATE</option>
+                <option value="UPDATE">UPDATE</option>
+                <option value="DELETE">DELETE</option>
+                <option value="LOGIN">LOGIN (Se aplicável)</option>
+            </select>
         </div>
 
-        <!-- Table Container -->
-        <div class="table-responsive">
-            <table class="min-w-full bg-white border border-gray-200 rounded-xl shadow-sm">
-                <thead>
-                    <tr class="bg-gray-100 text-left text-gray-600 uppercase text-xs">
-                        <th class="py-3 px-4 font-semibold">Usuário</th>
-                        <th class="py-3 px-4 font-semibold">Ação</th>
-                        <th class="py-3 px-4 font-semibold">ID do Registro</th>
-                        <th class="py-3 px-4 font-semibold">Detalhes</th>
-                        <th class="py-3 px-4 font-semibold">Data/Hora</th>
+        <!-- Tabela de Logs -->
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-indigo-600 text-white">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider rounded-tl-xl">Data/Hora</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Usuário</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider">Ação</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Tabela</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">ID do Registro</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider rounded-tr-xl">Detalhes</th>
                     </tr>
                 </thead>
-                <tbody id="logs-table-body" class="divide-y divide-gray-200 text-sm">
-                    <!-- Logs will be inserted here by JavaScript -->
+                <tbody id="auditLogTableBody" class="bg-white divide-y divide-gray-100">
+                    <!-- Logs serão injetados aqui -->
                 </tbody>
             </table>
         </div>
+        
+        <p id="loadingMessage" class="mt-4 text-center text-gray-500">Carregando logs de auditoria...</p>
+        <p id="noResults" class="mt-4 text-center text-gray-500 hidden">Nenhum log encontrado com os critérios de busca.</p>
+
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const tableBody = document.getElementById('logs-table-body');
-            const loadingIndicator = document.getElementById('loading-indicator');
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('auditLogTableBody');
+            const searchInput = document.getElementById('searchInput');
+            const actionFilter = document.getElementById('actionFilter');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const noResults = document.getElementById('noResults');
 
-            try {
-                // Fetch data from the new audit log API endpoint
-                const response = await fetch('/logs_auditoria');
-                if (!response.ok) {
-                    throw new Error(`Erro ao buscar os logs: ${response.statusText}`);
+            let allLogs = [];
+
+            // Função para buscar os logs do backend
+            async function fetchAuditLogs() {
+                loadingMessage.classList.remove('hidden');
+                tableBody.innerHTML = '';
+                
+                try {
+                    const response = await fetch('/logs_auditoria');
+                    if (!response.ok) {
+                        throw new Error('Falha ao carregar os logs de auditoria.');
+                    }
+                    allLogs = await response.json();
+                    filterAndRenderTable();
+                } catch (error) {
+                    console.error('Erro ao buscar logs:', error);
+                    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-sm text-center text-red-500">Erro ao carregar logs. Verifique a API.</td></tr>`;
+                } finally {
+                    loadingMessage.classList.add('hidden');
                 }
-                const logs = await response.json();
+            }
 
-                loadingIndicator.style.display = 'none';
+            // Função para formatar o timestamp
+            function formatTimestamp(isoString) {
+                if (!isoString) return '';
+                const date = new Date(isoString);
+                return date.toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            }
 
-                if (logs.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="py-4 px-4 text-center text-gray-500">Nenhum log de auditoria encontrado.</td></tr>`;
+            // Função para renderizar a tabela
+            function renderTable(data) {
+                tableBody.innerHTML = '';
+                if (data.length === 0) {
+                    noResults.classList.remove('hidden');
                     return;
                 }
+                noResults.classList.add('hidden');
 
-                logs.forEach(log => {
+                data.forEach(log => {
                     const row = document.createElement('tr');
-                    row.className = 'hover:bg-gray-50';
-
-                    // Parse and format the timestamp
-                    const timestamp = new Date(log.timestamp).toLocaleString('pt-BR', {
-                        year: 'numeric', month: 'numeric', day: 'numeric',
-                        hour: '2-digit', minute: '2-digit', second: '2-digit'
-                    });
+                    row.classList.add('hover:bg-gray-50');
+                    const actionClass = 'log-' + log.action; // Classes definidas no <style>
 
                     row.innerHTML = `
-                        <td class="py-3 px-4 text-gray-700 font-semibold">${log.username}</td>
-                        <td class="py-3 px-4 font-semibold ${log.action === 'DELETE' ? 'text-red-600' : log.action === 'CREATE' ? 'text-green-600' : 'text-blue-600'}">${log.action}</td>
-                        <td class="py-3 px-4 text-gray-500 font-mono text-xs break-all">${log.record_id}</td>
-                        <td class="py-3 px-4 text-gray-700">${log.details}</td>
-                        <td class="py-3 px-4 text-gray-500">${timestamp}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-900 font-mono">${formatTimestamp(log.timestamp)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${log.username || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${actionClass}">${log.action}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">${log.table_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500">${log.record_id}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">${log.details}</td>
                     `;
                     tableBody.appendChild(row);
                 });
-
-            } catch (error) {
-                console.error("Falha ao carregar logs:", error);
-                loadingIndicator.style.display = 'none';
-                tableBody.innerHTML = `<tr><td colspan="5" class="py-4 px-4 text-center text-red-500">Erro ao carregar os dados. Verifique o console para mais detalhes.</td></tr>`;
             }
+
+            // Função para filtrar e renderizar
+            function filterAndRenderTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedAction = actionFilter.value;
+                
+                const filtered = allLogs.filter(log => {
+                    // 1. Filtro por Ação
+                    const actionMatch = !selectedAction || log.action === selectedAction;
+                    
+                    // 2. Filtro por Busca (Usuário, Tabela, Detalhes)
+                    const searchMatch = (
+                        (log.username && log.username.toLowerCase().includes(searchTerm)) ||
+                        (log.table_name && log.table_name.toLowerCase().includes(searchTerm)) ||
+                        (log.details && log.details.toLowerCase().includes(searchTerm))
+                    );
+                    
+                    return actionMatch && searchMatch;
+                });
+                
+                renderTable(filtered);
+            }
+
+            // Eventos de Filtro e Busca
+            searchInput.addEventListener('input', filterAndRenderTable);
+            actionFilter.addEventListener('change', filterAndRenderTable);
+
+            // Inicia o carregamento dos logs
+            fetchAuditLogs();
         });
     </script>
 </body>
