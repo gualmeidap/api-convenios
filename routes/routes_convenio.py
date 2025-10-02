@@ -162,7 +162,7 @@ Equipe UNIESP"""
         
         # Redireciona o usuário para a página de visualização após o sucesso
         flash('Convênio inserido com sucesso!')
-        return redirect(url_for('visualizar_convenios'))
+        return redirect(url_for('convenio_bp.visualizar_convenios'))
 
     except Exception as e:
         db.session.rollback()

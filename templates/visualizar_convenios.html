@@ -183,7 +183,7 @@
             conveniosData = data;
             
             // Simula o perfil do usuário (a segurança real é no backend)
-            currentUserRole = 'admin'; 
+            currentUserRole = '{{ current_user.role }}'; 
             
             renderTable(conveniosData);
         } catch (error) {

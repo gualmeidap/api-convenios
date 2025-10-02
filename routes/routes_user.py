@@ -72,7 +72,7 @@ def register():
         new_user = User(email=email, username=username, role=role)
         new_user.set_password(password)
         db.session.add(new_user)
-        db.sesson.commit()
+        db.session.commit()
         flash(f"Usuário {username} criado com sucesso!")
         return redirect(url_for('convenio_bp.visualizar_convenios'))
     
