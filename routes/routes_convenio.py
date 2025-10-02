@@ -304,7 +304,7 @@ def download_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # Rota para visualizar os Logs de Auditoria
-@convenio_bp.route('/logs_auditoria_api', methods=['GET'])
+@convenio_bp.route('/logs_auditoria', methods=['GET'])
 @login_required
 @role_required(['admin'])
 def get_logs_auditoria():
