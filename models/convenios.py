@@ -26,9 +26,9 @@ class User(UserMixin, db.Model):
 
 # Enum para os status do convênio
 class ConvenioStatus(PyEnum):
-    ativo = "Ativo"
-    rescindido = "Rescindido"
-    expirado = "Expirado"
+    ativo = "ativo"
+    rescindido = "rescindido"
+    expirado = "expirado"
 
 class Convenios(db.Model):
     __tablename__ = 'convenio'

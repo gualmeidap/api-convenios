@@ -189,20 +189,44 @@ def update_convenio(convenio_id):
             data = request.get_json()
         else:
             data = request.form
+
+        print(f"DEBUG: Dados recebidos para atualização do Convênio {convenio_id}: {data}") # Log de debug
         
         # Itera sobre os dados recebidos para atualizar o convênio
         for key, value in data.items():
+
+            # Garante que None (ou seja, campos vazios) não causem erros de string
+            if value is None or value == '':
+                value = None 
+
             if key == 'data_assinatura':
                 if value:
                     setattr(convenio, key, datetime.strptime(value, '%Y-%m-%d').date())
                 else:
                     setattr(convenio, key, None)
             elif key == 'status':
-                if value in [e.value for e in ConvenioStatus]:
-                    setattr(convenio, key, ConvenioStatus(value))
+                print(f"DEBUG STATUS: Tentando processar status. Valor recebido: '{value}'") # Log de debug específico
+
+                # Só tenta processar se o valor não for None (ou seja, se o campo veio na requisição)
+                if value:
+                    # Aplica a correção defensiva novamente: garante minúsculas
+                    status_value_lower = value.lower()
+                    
+                    # Verifica se o valor minúsculo é válido no Enum
+                    if status_value_lower in [e.value for e in ConvenioStatus]:
+                        setattr(convenio, key, ConvenioStatus(status_value_lower))
+                        print(f"DEBUG STATUS: Status alterado com sucesso para: {status_value_lower}")
+                    else:
+                        print(f"ERRO DE VALIDAÇÃO: Valor '{value}' não é um status válido. Ignorando atualização de status.")
+                else:
+                    print("DEBUG STATUS: Valor do status recebido está vazio ou nulo. Nenhuma alteração de status.")
+
             elif key in ['qtd_funcionarios', 'qtd_associados', 'qtd_sindicalizados']:
-                setattr(convenio, key, int(value))
-            else:
+                if value is not None:
+                    setattr(convenio, key, int(value))
+            
+            # Atualiza todos os outros campos de texto/string
+            elif value is not None:
                 setattr(convenio, key, value)
         
         # Verifica se um novo arquivo foi enviado para substituição
