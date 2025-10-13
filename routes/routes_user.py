@@ -74,7 +74,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         flash(f"Usuário {username} criado com sucesso!")
-        return redirect(url_for('convenio_bp.visualizar_convenios'))
+        return redirect(url_for('user_bp.visualizar_usuarios'))
     
     return render_template('register.html')
 

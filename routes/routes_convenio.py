@@ -20,7 +20,7 @@ def allowed_file(filename):
 
 # --- Rotas de Visualização (Servindo HTML) ---
 
-@convenio_bp.route('/')
+@convenio_bp.route('/convenio')
 @login_required
 @role_required(['admin', 'diretor'])
 def index():
@@ -93,7 +93,14 @@ def adicionar_convenio():
         
         # Converte tipos
         data_assinatura = datetime.strptime(data_assinatura_str, '%Y-%m-%d').date() if data_assinatura_str else None
-        status = ConvenioStatus(status_str) if status_str in [e.value for e in ConvenioStatus] else None
+        
+        # --- Alteração para garantir minúsculas no status, se houver valor ---
+        status = None
+        if status_str:
+            status_lower = status_str.lower()
+            if status_lower in [e.value for e in ConvenioStatus]:
+                status = ConvenioStatus(status_lower)
+        # --- Fim da alteração ---
         
         # Prepara o arquivo
         arquivo = request.files.get('caminho_arquivo_pdf')

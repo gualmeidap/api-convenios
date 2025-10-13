@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+instance/
+.vscode/
+venv/ ou .venv/
+uploads/
+.env
+migrations/versions/__pycache__
