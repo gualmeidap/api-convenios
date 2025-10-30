@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, redirect, render_template, request, jsonify, send_from_directory, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, jsonify, send_from_directory, url_for
 from flask_login import login_required, current_user
 from db import db
 from models.convenios import AuditLog, Convenios, ConvenioStatus
@@ -112,6 +112,7 @@ def adicionar_convenio():
 
         # Cria o novo objeto Convenios
         novoConvenio = Convenios(
+            user_id=current_user.id, # Associa o convênio ao ID do usuário logado
             nome_conveniada=nome_conveniada,
             cnpj=cnpj,
             nome_fantasia=nome_fantasia,
@@ -186,10 +187,17 @@ def get_convenio(convenio_id):
 # Editar Convênio (por id)
 @convenio_bp.route('/convenio/<uuid:convenio_id>', methods=['PATCH', 'POST'])
 @login_required
-@role_required(['admin'])
+@role_required(['admin', 'diretor'])
 def update_convenio(convenio_id):
     convenio = Convenios.query.get_or_404(convenio_id)
-    from app import app # Acesso ao config do app
+    from app import app
+
+    # Permite edição se for Admin OU se o usuário logado for o criador do convênio
+    is_admin = current_user.role == 'admin'
+    is_owner = convenio.user_id == current_user.id
+
+    if not is_admin and not is_owner:
+        abort(403) # Acesso negado
     
     try:
         if request.is_json:
@@ -280,6 +288,13 @@ def delete(convenio_id):
     convenio = Convenios.query.get_or_404(convenio_id)
     
     from app import app
+
+    # Permite exclusão se for Admin OU se o usuário logado for o criador do convênio
+    is_admin = current_user.role == 'admin'
+    is_owner = convenio.user_id == current_user.id
+
+    if not is_admin and not is_owner:
+        abort(403) # Acesso negado
 
     # --- LOG DE AUDITORIA: Ação de Exclusão ---
     log_entry = AuditLog(

@@ -1,412 +1,356 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualização de Convênios</title>
-    <!-- Inclui o CDN do Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f0f2f5; 
-        }
-        th {
-            cursor: pointer;
-        }
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualização de Convênios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f2f5;
+    }
+    th {
+      cursor: pointer;
+    }
+    .modal-overlay {
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  </style>
 </head>
 <body class="p-4 md:p-8">
 
-<div class="max-w-7xl w-full mx-auto bg-white p-6 md:p-10 rounded-2xl shadow-xl border border-gray-200">
-    
-    <!-- Cabeçalho da página -->
+  <div class="max-w-7xl w-full mx-auto bg-white p-6 md:p-10 rounded-2xl shadow-xl border border-gray-200">
+    <!-- Cabeçalho -->
     <div class="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-10">
-        <div class="text-center md:text-left mb-4 md:mb-0">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-indigo-700">Convênios Cadastrados</h1>
-            <p class="mt-2 text-lg text-gray-600">Visualize, busque e filtre todos os convênios.</p>
-        </div>
-        <div class="flex space-x-4">
-            <!-- Rota de Novo Convênio: alterada para /cadastro_convenios.html, caso esteja na raiz -->
-            <a href="/convenio" class="flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
-                Novo Convênio
-            </a>
-            <a href="/logout" class="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
-                Sair
-            </a>
-        </div>
+      <div class="text-center md:text-left mb-4 md:mb-0">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-indigo-700">Convênios Cadastrados</h1>
+        <p class="mt-2 text-lg text-gray-600">Visualize, busque e filtre todos os convênios.</p>
+      </div>
+      <div class="flex space-x-4">
+        <a href="/convenio" class="flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition">
+          Novo Convênio
+        </a>
+        <a href="/logout" class="flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
+          Sair
+        </a>
+      </div>
     </div>
-    
-    <!-- Seção de Filtros e Busca -->
+
+    <!-- Filtros -->
     <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
-        <input type="text" id="searchInput" placeholder="Buscar por nome, CNPJ, etc." class="flex-1 w-full md:w-auto rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5 transition-shadow duration-200">
-        
-        <select id="statusFilter" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5 transition-shadow duration-200">
-            <option value="">Filtrar por Status</option>
-            <option value="ativo">Ativo</option>
-            <option value="rescindido">Rescindido</option>
-            <option value="expirado">Expirado</option>
-        </select>
+      <input type="text" id="searchInput" placeholder="Buscar por nome, CNPJ, etc."
+            class="flex-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5">
+      <select id="statusFilter" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2.5">
+        <option value="">Filtrar por Status</option>
+        <option value="ativo">Ativo</option>
+        <option value="rescindido">Rescindido</option>
+        <option value="expirado">Expirado</option>
+      </select>
     </div>
-    
-    <!-- Tabela de Convênios -->
+
+    <!-- Tabela -->
     <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-md">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onclick="sortTable('nome_conveniada')">Nome da Conveniada</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onclick="sortTable('cnpj')">CNPJ</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onclick="sortTable('cidade')">Cidade</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onclick="sortTable('status')">Status</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" onclick="sortTable('data_assinatura')">Data de Assinatura</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="conveniosTableBody" class="bg-white divide-y divide-gray-200">
-                <!-- Os dados serão inseridos aqui pelo JavaScript -->
-                <tr>
-                    <td colspan="7" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">
-                        Carregando convênios...
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" onclick="sortTable('nome_conveniada')">Nome da Conveniada</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" onclick="sortTable('cnpj')">CNPJ</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" onclick="sortTable('cidade')">Cidade</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" onclick="sortTable('status')">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" onclick="sortTable('data_assinatura')">Data de Assinatura</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="conveniosTableBody" class="bg-white divide-y divide-gray-200">
+          <tr>
+            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+              Carregando convênios...
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-</div>
+  </div>
 
-<!-- Modal de Edição (Inicialmente oculto) -->
-<div id="editModal" class="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-40 hidden flex items-center justify-center">
+  <!-- Modal de Edição -->
+  <div id="editModal" class="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-40 hidden flex items-center justify-center">
     <div class="bg-white rounded-lg p-6 max-w-lg mx-auto shadow-xl">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold text-indigo-700">Editar Convênio</h2>
-            <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-indigo-700">Editar Convênio</h2>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form id="editForm" method="post" enctype="multipart/form-data">
+        <input type="hidden" id="editConvenioId" name="convenio_id">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <label for="editNomeConveniada" class="block text-sm font-medium text-gray-700">Nome da Conveniada</label>
+            <input type="text" id="editNomeConveniada" name="nome_conveniada" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
+          </div>
+          <div>
+            <label for="editCnpj" class="block text-sm font-medium text-gray-700">CNPJ</label>
+            <input type="text" id="editCnpj" name="cnpj" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
+          </div>
+          <div>
+            <label for="editStatus" class="block text-sm font-medium text-gray-700">Status</label>
+            <select id="editStatus" name="status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
+              <option value="ativo">Ativo</option>
+              <option value="rescindido">Rescindido</option>
+              <option value="expirado">Expirado</option>
+            </select>
+          </div>
+          <div>
+            <label for="editCidade" class="block text-sm font-medium text-gray-700">Cidade</label>
+            <input type="text" id="editCidade" name="cidade" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
+          </div>
+          <div>
+            <label for="editEstado" class="block text-sm font-medium text-gray-700">Estado (UF)</label>
+            <input type="text" id="editEstado" name="estado" required maxlength="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
+          </div>
+          <div>
+            <label for="editDataAssinatura" class="block text-sm font-medium text-gray-700">Data de Assinatura</label>
+            <input type="date" id="editDataAssinatura" name="data_assinatura" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
+          </div>
+          <div class="col-span-2">
+            <label for="editDocumento" class="block text-sm font-medium text-gray-700">Novo Documento PDF (Opcional)</label>
+            <input type="file" id="editDocumento" name="documento" accept="application/pdf" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            <p id="currentFile" class="mt-2 text-sm text-gray-500"></p>
+          </div>
         </div>
-        
-        <form id="editForm" method="post" enctype="multipart/form-data">
-            <input type="hidden" id="editConvenioId" name="convenio_id">
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="col-span-2">
-                    <label for="editNomeConveniada" class="block text-sm font-medium text-gray-700">Nome da Conveniada</label>
-                    <input type="text" id="editNomeConveniada" name="nome_conveniada" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
-                </div>
-                <div>
-                    <label for="editCnpj" class="block text-sm font-medium text-gray-700">CNPJ</label>
-                    <input type="text" id="editCnpj" name="cnpj" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
-                </div>
-                <div>
-                    <label for="editStatus" class="block text-sm font-medium text-gray-700">Status</label>
-                    <select id="editStatus" name="status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
-                        <option value="ativo">Ativo</option>
-                        <option value="rescindido">Rescindido</option>
-                        <option value="expirado">Expirado</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="editCidade" class="block text-sm font-medium text-gray-700">Cidade</label>
-                    <input type="text" id="editCidade" name="cidade" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
-                </div>
-                <div>
-                    <label for="editEstado" class="block text-sm font-medium text-gray-700">Estado (UF)</label>
-                    <input type="text" id="editEstado" name="estado" required maxlength="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
-                </div>
-                <div>
-                    <label for="editDataAssinatura" class="block text-sm font-medium text-gray-700">Data de Assinatura</label>
-                    <input type="date" id="editDataAssinatura" name="data_assinatura" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
-                </div>
-                <div class="col-span-2">
-                    <label for="editDocumento" class="block text-sm font-medium text-gray-700">Novo Documento PDF (Opcional)</label>
-                    <input type="file" id="editDocumento" name="documento" accept="application/pdf" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                    <p id="currentFile" class="mt-2 text-sm text-gray-500"></p>
-                </div>
-            </div>
 
-            <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" onclick="closeModal()" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none">Cancelar</button>
-                <button type="submit" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">Salvar Alterações</button>
-            </div>
-        </form>
+        <div class="mt-6 flex justify-end space-x-3">
+          <button type="button" onclick="closeModal()" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300">Cancelar</button>
+          <button type="submit" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">Salvar Alterações</button>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
 
-<!-- NOVO: Modal de Confirmação de Exclusão (Inicialmente oculto) -->
-<div id="confirmDeleteModal" class="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-40 hidden flex items-center justify-center modal-overlay">
+  <!-- Modal de Exclusão -->
+  <div id="confirmDeleteModal" class="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-40 hidden flex items-center justify-center modal-overlay">
     <div class="bg-white rounded-xl p-6 max-w-sm mx-auto shadow-2xl">
-        <h3 class="text-xl font-bold text-red-700 mb-4">Confirmar Exclusão</h3>
-        <p id="confirmDeleteMessage" class="mb-6 text-gray-700">Tem certeza que deseja excluir este convênio? Essa ação não pode ser desfeita.</p>
-        <div class="flex justify-end space-x-3">
-            <button id="cancelDeleteBtn" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors duration-200 focus:outline-none">Cancelar</button>
-            <button id="confirmDeleteBtn" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 focus:outline-none">Excluir</button>
-        </div>
+      <h3 class="text-xl font-bold text-red-700 mb-4">Confirmar Exclusão</h3>
+      <p id="confirmDeleteMessage" class="mb-6 text-gray-700">Tem certeza que deseja excluir este convênio? Essa ação não pode ser desfeita.</p>
+      <div class="flex justify-end space-x-3">
+        <button id="cancelDeleteBtn" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300">Cancelar</button>
+        <button id="confirmDeleteBtn" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700">Excluir</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
+  <script>
     let conveniosData = [];
     let sortDirection = {};
-    let currentUserRole = '';
-    let convenioToDeleteId = null; // Variável para rastrear o ID a ser excluído
+    // Pegando dados do usuário com tratamento de string
+    let currentUserRole = "{{ current_user.role | default('', true) }}".toLowerCase().trim();
+    let currentUserId = "{{ current_user.id | default('', true) }}".trim();
+    let convenioToDeleteId = null;
 
-    // FUNÇÃO DE FORMATAR DATA: YYYY-MM-DD para DD/MM/YYYY
+    // --- LOG DE DEBUG PRINCIPAL ---
+    console.log(`[DEBUG] User Role: ${currentUserRole} | User ID: ${currentUserId}`);
+    // -----------------------------
+
     const formatDate = (isoDate) => {
-        if (!isoDate) return 'N/A';
-        // Garante que a data está no formato YYYY-MM-DD (esperado do backend)
-        const [year, month, day] = isoDate.split('-');
-        return `${day}/${month}/${year}`;
+      if (!isoDate) return 'N/A';
+      const [year, month, day] = isoDate.split('-');
+      return `${day}/${month}/${year}`;
     };
 
-    // NOVO: FUNÇÃO PARA CAPITALIZAR A PRIMEIRA LETRA (Ex: "ativo" -> "Ativo")
-    const capitalizeFirstLetter = (string) => {
-        if (!string) return '';
-        const lowerString = String(string).toLowerCase();
-        // Capitaliza apenas a primeira letra (e garante que o resto é minúsculo)
-        return lowerString.charAt(0).toUpperCase() + lowerString.slice(1);
+    const capitalizeFirstLetter = (str) => {
+      if (!str) return '';
+      str = str.toString().toLowerCase();
+      return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
-    const fetchConvenios = async () => {
-        const tableBody = document.getElementById('conveniosTableBody');
-        tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">Carregando convênios...</td></tr>`;
-
-        try {
-            // Em um ambiente real, esta rota faria uma requisição AJAX para o servidor
-            const response = await fetch('/convenios_api');
-            if (!response.ok) {
-                throw new Error('Erro ao carregar os dados. Talvez a sessão tenha expirado.');
-            }
-            const data = await response.json();
-            conveniosData = data;
-            
-            // Simula o perfil do usuário (a segurança real é no backend)
-            currentUserRole = '{{ current_user.role }}'; 
-            
-            renderTable(conveniosData);
-        } catch (error) {
-            console.error('Erro:', error);
-            const tableBody = document.getElementById('conveniosTableBody');
-            tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Erro ao carregar dados: ${error.message}</td></tr>`;
-        }
-    };
-
-    const renderTable = (data) => {
-        const tableBody = document.getElementById('conveniosTableBody');
-        tableBody.innerHTML = '';
-
-        if (data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">Nenhum convênio encontrado.</td></tr>`;
-            return;
-        }
-
-        data.forEach(convenio => {
-            const row = document.createElement('tr');
-            row.className = 'hover:bg-gray-100 transition-colors duration-150';
-            
-            let acoesHtml = `<span class="text-gray-400">N/A</span>`;
-            if (currentUserRole === 'admin') {
-                // A função `excluirConvenio` agora abre o modal de confirmação
-                acoesHtml = `
-                    <button onclick="openEditModal('${convenio.id}')" class="text-indigo-600 hover:text-indigo-900 transition-colors duration-200 mr-2">
-                        <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        Editar
-                    </button>
-                    <button onclick="openDeleteModal('${convenio.id}')" class="text-red-600 hover:text-red-900 transition-colors duration-200">
-                        <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.013 21H7.987a2 2 0 01-1.92-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        Excluir
-                    </button>
-                `;
-            }
-
-            // CORREÇÃO: Usando toLowerCase() para definir as classes de cor
-            const statusLower = convenio.status.toLowerCase();
-            const statusClasses = 
-                statusLower === 'ativo' ? 'bg-green-100 text-green-800' : 
-                statusLower === 'rescindido' ? 'bg-red-100 text-red-800' :
-                'bg-yellow-100 text-yellow-800'; // Amarelo para 'expirado' ou outro
-
-            // NOVO: Usa a função capitalizeFirstLetter para exibir o status formatado
-            const displayStatus = capitalizeFirstLetter(convenio.status);
-
-            row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${convenio.nome_conveniada}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${convenio.cnpj}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${convenio.cidade}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClasses}">
-                        ${displayStatus}
-                    </span>
-                </td>
-                <!-- USO DA FUNÇÃO formatDate PARA FORMATAR A DATA (DD/MM/AAAA) -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(convenio.data_assinatura)}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ${convenio.caminho_arquivo_pdf ? 
-                        `<a href="${getFileUrl(convenio.caminho_arquivo_pdf)}" download class="text-indigo-600 hover:underline">Baixar PDF</a>` : 
-                        `<span class="text-gray-400">N/A</span>`
-                    }
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${acoesHtml}</td>
-            `;
-            tableBody.appendChild(row);
-        });
-    };
-    
-    // Funções de filtro e ordenação
-    const filterAndSearch = () => {
-        const searchValue = document.getElementById('searchInput').value.toLowerCase();
-        // O filtro de status usa o valor em minúsculo, o que está correto
-        const statusValue = document.getElementById('statusFilter').value.toLowerCase(); 
-        const filteredData = conveniosData.filter(convenio => {
-            const matchesSearch = Object.values(convenio).some(val => 
-                String(val).toLowerCase().includes(searchValue)
-            );
-            const matchesStatus = statusValue === '' || convenio.status.toLowerCase() === statusValue;
-            return matchesSearch && matchesStatus;
-        });
-        renderTable(filteredData);
-    };
-
-    const sortTable = (column) => {
-        const currentDirection = sortDirection[column] === 'asc' ? 'desc' : 'asc';
-        sortDirection[column] = currentDirection;
-        const sortedData = [...conveniosData].sort((a, b) => {
-            const aVal = a[column];
-            const bVal = b[column];
-            if (aVal < bVal) return currentDirection === 'asc' ? -1 : 1;
-            if (aVal > bVal) return currentDirection === 'asc' ? 1 : -1;
-            return 0;
-        });
-        renderTable(sortedData);
-    };
-    
     function getFileUrl(filePath) {
-        // Assume que o caminho completo do arquivo no backend é `uploads/<nome_do_arquivo>`
-        const filename = filePath.split('/').pop().split('\\').pop();
-        return `/uploads/${filename}`;
+      // Tenta extrair o nome do arquivo, assumindo que pode vir com diferentes separadores de caminho
+      const filename = filePath.split(/[/\\]/).pop();
+      return `/uploads/${filename}`;
     }
 
-    // --- Lógica para o Modal de Edição ---
+    async function fetchConvenios() {
+      const tableBody = document.getElementById('conveniosTableBody');
+      tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">Carregando convênios...</td></tr>`;
+      try {
+        const response = await fetch('/convenios_api');
+        if (!response.ok) throw new Error('Erro ao carregar os dados.');
+        const data = await response.json();
+        // Log para ver a estrutura dos dados retornados
+        console.log("[DEBUG API] Dados da API recebidos:", data); 
+        conveniosData = data;
+        renderTable(conveniosData);
+      } catch (error) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Erro ao carregar os convênios: ${error.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(data) {
+      const tableBody = document.getElementById('conveniosTableBody');
+      tableBody.innerHTML = '';
+
+      if (!data.length) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">Nenhum convênio encontrado.</td></tr>`;
+        return;
+      }
+
+      data.forEach(convenio => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-100 transition-colors';
+
+        // --- LÓGICA DE PERMISSÃO E VERIFICAÇÃO ---
+        // Tratamento robusto para o ID do criador
+        const convenioCriadorId = (convenio.user_id || '').toString().trim();
+        const isCreator = convenioCriadorId === currentUserId;
+        
+        // Verifica se é admin OU (diretor E criador)
+        const canEditOrDelete =
+          currentUserRole === 'admin' ||
+          (currentUserRole === 'diretor' && isCreator);
+        
+        // NOVO LOG DE PERMISSÃO POR LINHA
+        console.log(`[DEBUG PERM] Convênio: ${convenio.nome_conveniada} | User ID: ${currentUserId} | Creator ID: ${convenioCriadorId} | Permissão: ${canEditOrDelete}`);
+        // ----------------------------------------------
+
+
+        const statusLower = (convenio.status || '').toLowerCase();
+        const statusClasses =
+          statusLower === 'ativo' ? 'bg-green-100 text-green-800' :
+          statusLower === 'rescindido' ? 'bg-red-100 text-red-800' :
+          'bg-yellow-100 text-yellow-800';
+
+        const displayStatus = capitalizeFirstLetter(convenio.status);
+
+        let acoesHtml = `<span class="text-gray-400">N/A</span>`;
+        if (canEditOrDelete) {
+          acoesHtml = `
+            <button onclick="openEditModal('${convenio.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2">Editar</button>
+            <button onclick="openDeleteModal('${convenio.id}')" class="text-red-600 hover:text-red-900">Excluir</button>
+          `;
+        }
+
+        row.innerHTML = `
+          <td class="px-6 py-4 text-sm font-medium text-gray-900">${convenio.nome_conveniada}</td>
+          <td class="px-6 py-4 text-sm text-gray-500">${convenio.cnpj}</td>
+          <td class="px-6 py-4 text-sm text-gray-500">${convenio.cidade}</td>
+          <td class="px-6 py-4 text-sm">
+            <span class="px-2 inline-flex text-xs font-semibold rounded-full ${statusClasses}">
+              ${displayStatus}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-sm text-gray-500">${formatDate(convenio.data_assinatura)}</td>
+          <td class="px-6 py-4 text-sm text-gray-500">
+            ${convenio.caminho_arquivo_pdf ? `<a href="${getFileUrl(convenio.caminho_arquivo_pdf)}" download class="text-indigo-600 hover:underline">Baixar PDF</a>` : `<span class="text-gray-400">N/A</span>`}
+          </td>
+          <td class="px-6 py-4 text-sm whitespace-nowrap">${acoesHtml}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function filterAndSearch() {
+      const searchValue = document.getElementById('searchInput').value.toLowerCase();
+      const statusValue = document.getElementById('statusFilter').value.toLowerCase();
+      const filtered = conveniosData.filter(c => {
+        const matchSearch = Object.values(c).some(v => String(v).toLowerCase().includes(searchValue));
+        const matchStatus = !statusValue || (c.status && c.status.toLowerCase() === statusValue);
+        return matchSearch && matchStatus;
+      });
+      renderTable(filtered);
+    }
+
+    function sortTable(column) {
+      const dir = sortDirection[column] === 'asc' ? 'desc' : 'asc';
+      sortDirection[column] = dir;
+      const sorted = [...conveniosData].sort((a, b) => {
+        const aVal = (a[column] || '').toString().toLowerCase();
+        const bVal = (b[column] || '').toString().toLowerCase();
+        return aVal.localeCompare(bVal) * (dir === 'asc' ? 1 : -1);
+      });
+      renderTable(sorted);
+    }
+
     const editModal = document.getElementById('editModal');
     const editForm = document.getElementById('editForm');
+
+    function openEditModal(id) {
+      const c = conveniosData.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('editConvenioId').value = c.id;
+      document.getElementById('editNomeConveniada').value = c.nome_conveniada;
+      document.getElementById('editCnpj').value = c.cnpj;
+      document.getElementById('editStatus').value = (c.status || '').toLowerCase();
+      document.getElementById('editCidade').value = c.cidade;
+      document.getElementById('editEstado').value = c.estado;
+      document.getElementById('editDataAssinatura').value = c.data_assinatura || '';
+      const currentFile = document.getElementById('currentFile');
+      currentFile.innerHTML = c.caminho_arquivo_pdf
+        ? `Arquivo atual: <a href="${getFileUrl(c.caminho_arquivo_pdf)}" download class="text-indigo-600 hover:underline">Baixar PDF</a>`
+        : 'Nenhum arquivo anexado.';
+      editModal.classList.replace('hidden', 'flex');
+    }
+
+    function closeModal() {
+      editModal.classList.replace('flex', 'hidden');
+    }
     
-    // Função para abrir o modal e preencher com os dados do convênio
-    const openEditModal = async (id) => {
-        const convenioToEdit = conveniosData.find(c => c.id === id);
-        
-        if (!convenioToEdit) {
-            console.error('Convênio não encontrado.');
-            return;
-        }
+    // Substituindo alert() por um console.error() para evitar quebras em iframe
+    function showFrontendError(message) {
+        console.error("Erro no Frontend:", message);
+        // Em produção, você usaria um modal estilizado para mostrar a mensagem
+    }
 
-        // Preenche o formulário com os dados
-        document.getElementById('editConvenioId').value = convenioToEdit.id;
-        document.getElementById('editNomeConveniada').value = convenioToEdit.nome_conveniada;
-        document.getElementById('editCnpj').value = convenioToEdit.cnpj;
-        
-        // CORREÇÃO: Garante que o valor setado no select seja em minúsculas para coincidir com as options
-        document.getElementById('editStatus').value = convenioToEdit.status.toLowerCase();
-
-        document.getElementById('editCidade').value = convenioToEdit.cidade;
-        document.getElementById('editEstado').value = convenioToEdit.estado;
-        
-        // A data no modal deve ser no formato YYYY-MM-DD para o input type="date"
-        document.getElementById('editDataAssinatura').value = convenioToEdit.data_assinatura || ''; 
-        
-        const currentFile = document.getElementById('currentFile');
-        if (convenioToEdit.caminho_arquivo_pdf) {
-            currentFile.innerHTML = `Arquivo atual: <a href="${getFileUrl(convenioToEdit.caminho_arquivo_pdf)}" download class="text-indigo-600 hover:underline">Baixar PDF</a>`;
-        } else {
-            currentFile.textContent = 'Nenhum arquivo anexado.';
-        }
-
-        editModal.classList.remove('hidden');
-    };
-
-    // Função para fechar o modal
-    const closeModal = () => {
-        editModal.classList.add('hidden');
-    };
-    
-    // Função para lidar com o envio do formulário de edição
     editForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const id = document.getElementById('editConvenioId').value;
-        const formData = new FormData(editForm);
-        
-        const response = await fetch(`/convenio/${id}`, {
-            method: 'POST', 
-            body: formData
-        });
-        
-        if (response.ok) {
-            console.log('Convênio atualizado com sucesso!');
-            closeModal();
-            fetchConvenios(); 
-        } else {
-            const error = await response.json();
-            console.error(`Erro ao atualizar o convênio: ${error.error}`);
-        }
+      e.preventDefault();
+      const id = document.getElementById('editConvenioId').value;
+      const formData = new FormData(editForm);
+      const res = await fetch(`/convenio/${id}`, { method: 'POST', body: formData });
+      if (res.ok) {
+        closeModal();
+        fetchConvenios();
+      } else {
+        showFrontendError('Erro ao atualizar o convênio. Verifique se o backend aceitou a requisição.');
+      }
     });
 
-
-    // --- NOVO: Lógica para o Modal de Confirmação de Exclusão ---
     const confirmDeleteModal = document.getElementById('confirmDeleteModal');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 
-    // Abre o modal de exclusão
-    const openDeleteModal = (id) => {
-        convenioToDeleteId = id;
-        confirmDeleteModal.classList.remove('hidden');
-    };
+    function openDeleteModal(id) {
+      convenioToDeleteId = id;
+      confirmDeleteModal.classList.replace('hidden', 'flex');
+    }
 
-    // Fecha o modal de exclusão
-    const closeDeleteModal = () => {
-        confirmDeleteModal.classList.add('hidden');
-        convenioToDeleteId = null;
-    };
-    
-    // Listener para o botão Cancelar do modal de exclusão
+    function closeDeleteModal() {
+      confirmDeleteModal.classList.replace('flex', 'hidden');
+      convenioToDeleteId = null;
+    }
+
     cancelDeleteBtn.onclick = closeDeleteModal;
 
-    // Listener para o botão Excluir do modal de exclusão
     confirmDeleteBtn.onclick = async () => {
-        if (convenioToDeleteId) {
-            await executeDelete(convenioToDeleteId);
-            closeDeleteModal();
-        }
+      if (!convenioToDeleteId) return;
+      const res = await fetch(`/convenio/${convenioToDeleteId}`, { method: 'DELETE' });
+      if (res.ok) {
+        closeDeleteModal();
+        fetchConvenios();
+      } else {
+        showFrontendError('Erro ao excluir convênio. Verifique se o backend aceitou a exclusão.');
+      }
     };
 
-    // Função que executa a requisição DELETE
-    const executeDelete = async (id) => {
-        const response = await fetch(`/convenio/${id}`, {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            console.log('Convênio excluído com sucesso!');
-            fetchConvenios();
-        } else {
-            const error = await response.json();
-            console.error(`Erro ao excluir o convênio: ${error.error}`);
-            // Aqui você poderia adicionar a lógica para mostrar um modal de erro
-        }
-    };
-    
-    // A função `excluirConvenio` agora apenas abre o modal de confirmação
-    const excluirConvenio = (id) => {
-        openDeleteModal(id);
-    };
-
-    document.getElementById('searchInput').addEventListener('keyup', filterAndSearch);
+    document.getElementById('searchInput').addEventListener('input', filterAndSearch);
     document.getElementById('statusFilter').addEventListener('change', filterAndSearch);
 
-    fetchConvenios();
-</script>
+    document.addEventListener('DOMContentLoaded', fetchConvenios);
+  </script>
 
 </body>
 </html>

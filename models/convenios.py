@@ -34,6 +34,7 @@ class Convenios(db.Model):
     __tablename__ = 'convenio'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=func.uuid_generate_v4())
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) # Rastreia o usuário que criou o convênio
     nome_conveniada = db.Column(db.String(255), nullable=False)
     cnpj = db.Column(db.String(255), nullable=False)
     nome_fantasia = db.Column(db.String(255), nullable=False)
@@ -57,9 +58,12 @@ class Convenios(db.Model):
     criado_em = db.Column(db.TIMESTAMP, nullable=False, default=func.now())
     atualizado_em = db.Column(db.TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now())
 
+    user = db.relationship('User', backref=db.backref('convenios', lazy=True)) # Relacionamento com a tabela de usuário
+
     def as_dict(self):
         return {
             'id': str(self.id),
+            'user_id': self.user_id, # Inclui o ID do criador
             'nome_conveniada': self.nome_conveniada,
             'cnpj': self.cnpj,
             'nome_fantasia': self.nome_fantasia,
