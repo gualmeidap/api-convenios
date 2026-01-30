@@ -3,145 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Convênio</title>
-    <!-- Inclui o CDN do Tailwind CSS -->
+    <title>Cadastro de Convênio | UNIESP IA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f0f2f5; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
         }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .error-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-<div class="max-w-4xl w-full mx-auto bg-white p-6 md:p-10 rounded-2xl shadow-xl border border-gray-200">
+<div id="app-container" class="max-w-5xl w-full mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
     
-    <!-- Cabeçalho do formulário -->
-    <div class="text-center mb-10">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-indigo-700">Cadastro de Convênio</h1>
-        <p class="mt-2 text-lg text-gray-600">Preencha os dados abaixo para registrar um novo convênio.</p>
+    <!-- Cabeçalho -->
+    <div class="bg-indigo-700 p-8 text-white">
+        <h1 class="text-3xl font-extrabold tracking-tight">Cadastro de Convênio</h1>
+        <p class="text-indigo-100 mt-2">Extração automática de dados via Inteligência Artificial (Ollama + Tesseract).</p>
     </div>
-    
-    <form id="convenioForm" action="/convenio" method="post" enctype="multipart/form-data" class="space-y-8">
+
+    <!-- Área de Alertas -->
+    <div id="alert-container" class="px-6 md:px-10 pt-6 hidden"></div>
+
+    <!-- O formulário aponta para a rota POST de cadastro -->
+    <form id="convenioForm" class="p-6 md:p-10 space-y-12" enctype="multipart/form-data">
         
-        <!-- Bloco 1: Dados da Conveniada -->
-        <div class="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Dados da Conveniada</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                    <label for="nome_conveniada" class="block text-sm font-medium text-gray-700">Nome da Conveniada</label>
-                    <input type="text" id="nome_conveniada" name="nome_conveniada" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="cnpj" class="block text-sm font-medium text-gray-700">CNPJ</label>
-                    <input type="text" id="cnpj" name="cnpj" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="nome_fantasia" class="block text-sm font-medium text-gray-700">Nome Fantasia</label>
-                    <input type="text" id="nome_fantasia" name="nome_fantasia" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="area_atuacao" class="block text-sm font-medium text-gray-700">Área de Atuação</label>
-                    <input type="text" id="area_atuacao" name="area_atuacao" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="cidade" class="block text-sm font-medium text-gray-700">Cidade</label>
-                    <input type="text" id="cidade" name="cidade" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
-                    <input type="text" id="estado" name="estado" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="qtd_funcionarios" class="block text-sm font-medium text-gray-700">Qtd. Funcionários</label>
-                    <input type="number" id="qtd_funcionarios" name="qtd_funcionarios" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="qtd_associados" class="block text-sm font-medium text-gray-700">Qtd. Associados</label>
-                    <input type="number" id="qtd_associados" name="qtd_associados" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="qtd_sindicalizados" class="block text-sm font-medium text-gray-700">Qtd. Sindicalizados</label>
-                    <input type="number" id="qtd_sindicalizados" name="qtd_sindicalizados" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-            </div>
-        </div>
+        <!-- Campo oculto para armazenar o caminho do arquivo temporário da IA -->
+        <input type="hidden" id="temp_file_path" name="temp_file_path">
 
-        <!-- Bloco 2: Dados do Responsável Legal da Conveniada -->
-        <div class="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Dados do Responsável Legal da Conveniada</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                    <label for="responsavel_legal" class="block text-sm font-medium text-gray-700">Responsável Legal</label>
-                    <input type="text" id="responsavel_legal" name="responsavel_legal" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="cargo_responsavel" class="block text-sm font-medium text-gray-700">Cargo do Responsável</label>
-                    <input type="text" id="cargo_responsavel" name="cargo_responsavel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="email_responsavel" class="block text-sm font-medium text-gray-700">E-mail do Responsável</label>
-                    <input type="email" id="email_responsavel" name="email_responsavel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="telefone_responsavel" class="block text-sm font-medium text-gray-700">Telefone do Responsável</label>
-                    <input type="tel" id="telefone_responsavel" name="telefone_responsavel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-            </div>
-        </div>
-
-        <!-- Bloco 3: Dados do Convênio e Observações -->
-        <div class="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Dados do Convênio e Documentação</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="unidade_uniesp" class="block text-sm font-medium text-gray-700">Unidade UNIESP</label>
-                    <input type="text" id="unidade_uniesp" name="unidade_uniesp" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="diretor_responsavel" class="block text-sm font-medium text-gray-700">Nome do Diretor Responsável</label>
-                    <input type="text" id="diretor_responsavel" name="diretor_responsavel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="diretor_responsavel_email" class="block text-sm font-medium text-gray-700">E-mail do Diretor Responsável</label>
-                    <input type="email" id="diretor_responsavel_email" name="diretor_responsavel_email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="data_assinatura" class="block text-sm font-medium text-gray-700">Data de Assinatura</label>
-                    <input type="date" id="data_assinatura" name="data_assinatura" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                </div>
-                <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                    <select id="status" name="status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                        <option value="ativo">Ativo</option>
-                        <option value="rescindido">Rescindido</option>
-                        <option value="expirado">Expirado</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label for="caminho_arquivo_pdf" class="block text-sm font-medium text-gray-700">Documento do Convênio (PDF)</label>
-                    <input type="file" id="caminho_arquivo_pdf" name="caminho_arquivo_pdf" accept="application/pdf" required>
-                </div>
+        <!-- PASSO 1: UPLOAD E PROCESSAMENTO -->
+        <section>
+            <div class="flex items-center mb-6">
+                <span class="flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-full font-bold mr-4">1</span>
+                <h2 class="text-xl font-bold text-gray-800 uppercase tracking-wide">Documento para Análise</h2>
             </div>
             
-            <div class="mt-6">
-                <label for="observacoes" class="block text-sm font-medium text-gray-700">Observações</label>
-                <textarea id="observacoes" name="observacoes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2"></textarea>
+            <div id="drop-zone" class="bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center transition-all relative">
+                <!-- Note o name="caminho_arquivo_pdf" para bater com o seu backend -->
+                <input type="file" id="caminho_arquivo_pdf" name="caminho_arquivo_pdf" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                <div id="upload-ui-default">
+                    <div class="mx-auto w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                        <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    </div>
+                    <p class="text-indigo-900 font-bold text-lg">Clique ou arraste o PDF do convênio</p>
+                    <p class="text-sm text-indigo-500">O sistema analisará o documento. Você poderá revisar os dados abaixo.</p>
+                </div>
+
+                <!-- UI de Processamento -->
+                <div id="upload-ui-processing" class="hidden space-y-4">
+                    <div class="flex justify-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
+                    </div>
+                    <p class="text-indigo-800 font-bold animate-pulse">IA Processando Documento...</p>
+                    <p class="text-xs text-indigo-500 italic">Extraindo textos e validando CNPJ...</p>
+                </div>
             </div>
+        </section>
+
+        <!-- DADOS PARA REVISÃO -->
+        <div id="form-fields-container" class="space-y-12 transition-opacity duration-500">
+            <!-- Dados da Conveniada -->
+            <section class="space-y-6">
+                <div class="flex items-center border-b border-gray-100 pb-3">
+                    <span class="text-sm font-bold text-gray-400 mr-2">SECÇÃO A</span>
+                    <h2 class="text-lg font-bold text-gray-700">Identificação da Conveniada</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">Razão Social</label>
+                        <input type="text" id="nome_conveniada" name="nome_conveniada" required class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">CNPJ</label>
+                        <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" required class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">Nome Fantasia</label>
+                        <input type="text" id="nome_fantasia" name="nome_fantasia" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">Área de Atuação</label>
+                        <input type="text" id="area_atuacao" name="area_atuacao" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Cidade</label>
+                            <input type="text" id="cidade" name="cidade" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">UF</label>
+                            <input type="text" id="estado" name="estado" maxlength="2" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 text-center uppercase font-bold">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Func.</label>
+                            <input type="number" id="qtd_funcionarios" name="qtd_funcionarios" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Assoc.</label>
+                            <input type="number" id="qtd_associados" name="qtd_associados" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Sind.</label>
+                            <input type="number" id="qtd_sindicalizados" name="qtd_sindicalizados" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Responsável Legal -->
+            <section class="space-y-6">
+                <div class="flex items-center border-b border-gray-100 pb-3">
+                    <span class="text-sm font-bold text-gray-400 mr-2">SECÇÃO B</span>
+                    <h2 class="text-lg font-bold text-gray-700">Responsável Legal da Conveniada</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-2">
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">Nome Completo</label>
+                        <input type="text" id="responsavel_legal" name="responsavel_legal" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">Cargo</label>
+                        <input type="text" id="cargo_responsavel" name="cargo_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">Telefone</label>
+                        <input type="tel" id="telefone_responsavel" name="telefone_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div class="lg:col-span-4">
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">E-mail Corporativo</label>
+                        <input type="email" id="email_responsavel" name="email_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                </div>
+            </section>
+
+            <!-- UNIESP -->
+            <section class="space-y-6">
+                <div class="flex items-center border-b border-gray-100 pb-3">
+                    <span class="text-sm font-bold text-gray-400 mr-2">SECÇÃO C</span>
+                    <h2 class="text-lg font-bold text-gray-700">Dados UNIESP e Assinatura</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">Unidade Responsável</label>
+                        <input type="text" id="unidade_uniesp" name="unidade_uniesp" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">Diretor Responsável</label>
+                        <input type="text" id="diretor_responsavel" name="diretor_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase mb-1">E-mail do Diretor</label>
+                        <input type="email" id="diretor_responsavel_email" name="diretor_responsavel_email" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Data Assinatura</label>
+                            <input type="date" id="data_assinatura" name="data_assinatura" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Status</label>
+                            <select id="status" name="status" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 font-bold">
+                                <option value="ativo">Ativo</option>
+                                <option value="rescindido">Rescindido</option>
+                                <option value="expirado">Expirado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-xs font-black text-gray-500 uppercase mb-1">Observações Internas</label>
+                    <textarea id="observacoes" name="observacoes" rows="3" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50"></textarea>
+                </div>
+            </section>
         </div>
 
-        <div>
-            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-base font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
-                Cadastrar Convênio
+        <div class="pt-10">
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-5 px-8 rounded-2xl shadow-xl transition-all uppercase tracking-widest flex items-center justify-center">
+                <span>Confirmar e Salvar Convênio</span>
             </button>
         </div>
-        
     </form>
 </div>
+
+<script>
+    // Configurações de Rota (Ajustado para o seu Blueprint)
+    const IA_PROCESS_ENDPOINT = "/processar_ia"; 
+    const SAVE_ENDPOINT = "/convenio";
+
+    const fileInput = document.getElementById('caminho_arquivo_pdf');
+    const tempFilePathInput = document.getElementById('temp_file_path');
+    const uploadUiDefault = document.getElementById('upload-ui-default');
+    const uploadUiProcessing = document.getElementById('upload-ui-processing');
+    const alertContainer = document.getElementById('alert-container');
+    const formFieldsContainer = document.getElementById('form-fields-container');
+    const convenioForm = document.getElementById('convenioForm');
+
+    const fieldMap = {
+        nome_conveniada: document.getElementById('nome_conveniada'),
+        cnpj: document.getElementById('cnpj'),
+        nome_fantasia: document.getElementById('nome_fantasia'),
+        area_atuacao: document.getElementById('area_atuacao'),
+        cidade: document.getElementById('cidade'),
+        estado: document.getElementById('estado'),
+        qtd_funcionarios: document.getElementById('qtd_funcionarios'),
+        qtd_associados: document.getElementById('qtd_associados'),
+        qtd_sindicalizados: document.getElementById('qtd_sindicalizados'),
+        responsavel_legal: document.getElementById('responsavel_legal'),
+        cargo_responsavel: document.getElementById('cargo_responsavel'),
+        telefone_responsavel: document.getElementById('telefone_responsavel'),
+        email_responsavel: document.getElementById('email_responsavel'),
+        unidade_uniesp: document.getElementById('unidade_uniesp'),
+        diretor_responsavel: document.getElementById('diretor_responsavel'),
+        diretor_responsavel_email: document.getElementById('diretor_responsavel_email'),
+        data_assinatura: document.getElementById('data_assinatura'),
+        observacoes: document.getElementById('observacoes')
+    };
+
+    function showAlert(message, type = 'error') {
+        alertContainer.innerHTML = `
+            <div class="${type === 'error' ? 'bg-red-50 text-red-700 border-red-200 error-shake' : 'bg-green-50 text-green-700 border-green-200'} p-4 rounded-xl border flex items-center shadow-sm">
+                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                <span class="font-medium">${message}</span>
+                <button type="button" onclick="this.parentElement.remove()" class="ml-auto font-bold opacity-50">&times;</button>
+            </div>
+        `;
+        alertContainer.classList.remove('hidden');
+        if(type === 'error') window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    // LISTENER PARA ANÁLISE DE IA
+    fileInput.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.type !== 'application/pdf') {
+            showAlert("Por favor, selecione apenas arquivos PDF.");
+            this.value = '';
+            return;
+        }
+
+        // Feedback Visual Início
+        uploadUiDefault.classList.add('hidden');
+        uploadUiProcessing.classList.remove('hidden');
+        formFieldsContainer.classList.add('opacity-30', 'pointer-events-none');
+        alertContainer.classList.add('hidden');
+
+        const formData = new FormData();
+        formData.append('caminho_arquivo_pdf', file); // Nome bate com o processar_ia do backend
+
+        try {
+            const response = await fetch(IA_PROCESS_ENDPOINT, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                const data = result.dados_sugeridos;
+                
+                // Armazena o caminho temporário retornado pela IA no campo oculto
+                tempFilePathInput.value = result.temp_file_path;
+
+                // Preenchimento dos campos
+                Object.keys(data).forEach(key => {
+                    const input = fieldMap[key];
+                    if (input) {
+                        input.value = data[key] || '';
+                        input.classList.add('ring-2', 'ring-indigo-400', 'bg-indigo-50');
+                        setTimeout(() => input.classList.remove('ring-2', 'ring-indigo-400', 'bg-indigo-50'), 3000);
+                    }
+                });
+                showAlert("Dados extraídos com sucesso! Revise as informações antes de salvar.", "success");
+            } else {
+                throw new Error(result.error || "Erro desconhecido na IA");
+            }
+        } catch (error) {
+            console.error("Erro no processamento:", error);
+            showAlert("A IA não conseguiu processar este arquivo, mas você pode preencher manualmente e salvar.");
+        } finally {
+            uploadUiDefault.classList.remove('hidden');
+            uploadUiProcessing.classList.add('hidden');
+            formFieldsContainer.classList.remove('opacity-30', 'pointer-events-none');
+        }
+    });
+
+    // MÁSCARA CNPJ
+    fieldMap.cnpj.addEventListener('input', (e) => {
+        let v = e.target.value.replace(/\D/g, '').slice(0, 14);
+        v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+             .replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+        e.target.value = v;
+    });
+
+    // ENVIO FINAL DO FORMULÁRIO
+    convenioForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = document.getElementById('submitBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            Salvando Convênio...
+        `;
+        btn.disabled = true;
+
+        const formData = new FormData(convenioForm);
+
+        try {
+            const response = await fetch(SAVE_ENDPOINT, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.redirected) {
+                // Se o backend redirecionar (url_for), seguimos o redirecionamento
+                window.location.href = response.url;
+                return;
+            }
+
+            const result = await response.json();
+            if (response.ok) {
+                showAlert("Convênio cadastrado com sucesso!", "success");
+                setTimeout(() => window.location.href = "/visualizar", 1500);
+            } else {
+                showAlert(result.error || "Erro ao salvar convênio.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        } catch (error) {
+            showAlert("Erro de conexão ao tentar salvar.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+</script>
 </body>
 </html>

@@ -1,4 +1,7 @@
 __pycache__/
+routes/__pycache__
+models/__pycache__
+migrations/__pycache__
 *.pyc
 instance/
 .vscode/

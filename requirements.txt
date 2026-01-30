@@ -5,3 +5,7 @@ Flask-Mail
 Flask-SQLAlchemy
 psycopg2-binary
 Werkzeug
+requests # Para comunicação com o Ollama
+pdfplumber # Para extração de texto de PDF digital
+Pillow # Dependência do pytesseract
+pytesseract # Para OCR (texto em imagens/escaneados)
