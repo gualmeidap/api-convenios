@@ -25,7 +25,7 @@
     <!-- Cabeçalho -->
     <div class="bg-indigo-700 p-8 text-white">
         <h1 class="text-3xl font-extrabold tracking-tight">Cadastro de Convênio</h1>
-        <p class="text-indigo-100 mt-2">Extração automática de dados via Inteligência Artificial (Ollama + Tesseract).</p>
+        <p class="mt-2 text-indigo-300">Faça upload do PDF do convênio para análise automática ou preencha os dados manualmente.</p>
     </div>
 
     <!-- Área de Alertas -->
@@ -71,7 +71,6 @@
             <!-- Dados da Conveniada -->
             <section class="space-y-6">
                 <div class="flex items-center border-b border-gray-100 pb-3">
-                    <span class="text-sm font-bold text-gray-400 mr-2">SECÇÃO A</span>
                     <h2 class="text-lg font-bold text-gray-700">Identificação da Conveniada</h2>
                 </div>
                 
@@ -122,7 +121,6 @@
             <!-- Responsável Legal -->
             <section class="space-y-6">
                 <div class="flex items-center border-b border-gray-100 pb-3">
-                    <span class="text-sm font-bold text-gray-400 mr-2">SECÇÃO B</span>
                     <h2 class="text-lg font-bold text-gray-700">Responsável Legal da Conveniada</h2>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -148,7 +146,6 @@
             <!-- UNIESP -->
             <section class="space-y-6">
                 <div class="flex items-center border-b border-gray-100 pb-3">
-                    <span class="text-sm font-bold text-gray-400 mr-2">SECÇÃO C</span>
                     <h2 class="text-lg font-bold text-gray-700">Dados UNIESP e Assinatura</h2>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -180,7 +177,7 @@
                     </div>
                 </div>
                 <div class="mt-4">
-                    <label class="block text-xs font-black text-gray-500 uppercase mb-1">Observações Internas</label>
+                    <label class="block text-xs font-black text-gray-500 uppercase mb-1">Observações Internas <span class="font-normal text-gray-400">(Opcional)</span></label>
                     <textarea id="observacoes" name="observacoes" rows="3" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50"></textarea>
                 </div>
             </section>
