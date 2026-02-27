@@ -99,19 +99,28 @@ def processar_ia():
             # Extração e Análise
             print("Extraindo texto do arquivo...")
             texto_extraido = extract_text_from_pdf(caminho_temp)
-            print("Texto Extraído")
 
-            # Prepara os dados do usuário logado (será incluído como nome e e-mail do diretor)
-            info_diretor = {
-                "diretor_responsavel": current_user.username,
-                "diretor_responsavel_email": current_user.email
-            }
-            print(f"Nome e e-mail do usuário logado: {info_diretor}")
+            if not texto_extraido or texto_extraido.strip() == "":
+                return jsonify({
+                    'success': False,
+                    'error': 'O PDF parece estar vazio ou é uma imagem sem texto legível.'
+                }), 422
 
             print("Analisando texto extraído")
-            resultado_ai = analyze_text_with_ollama(texto_extraido, user_info=info_diretor)
+            resultado_ai = analyze_text_with_ollama(texto_extraido)
             print("\n--- Resultado Analisado pela IA ---")
             print(resultado_ai)
+
+            if resultado_ai is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'A IA não conseguiu processar as informações deste documento.'
+                }), 500
+
+            print("Dados do diretor logado:")
+            resultado_ai['diretor_responsavel'] = current_user.username
+            resultado_ai['diretor_responsavel_email'] = current_user.email
+            print(f"Diretor: {resultado_ai['diretor_responsavel']}, Email: {resultado_ai['diretor_responsavel_email']}")
 
             # Retorna o caminho do arquivo e os dados para o frontend
             # O frontend deve guardar esse 'caminho_temp' para enviar no POST final

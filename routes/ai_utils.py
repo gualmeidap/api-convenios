@@ -18,8 +18,13 @@ def extract_text_from_pdf(file_path: str) -> str:
     try:
         print(f"[DEBUG] Abrindo PDF: {file_path}")
         with pdfplumber.open(file_path) as pdf:
-            pages_to_scan = [pdf.pages[-1]] # Agora pega as 2 últimas páginas
-            if len(pdf.pages) > 1: # Pega última página caso tenha mais de uma
+            if not pdf.pages:
+                raise ValueError("PDF não contém páginas")
+            pages_to_scan = []
+            
+            pages_to_scan.append(pdf.pages[-1])
+
+            if len(pdf.pages) > 1:
                 pages_to_scan.append(pdf.pages[-2])
 
             for i, page in enumerate(pages_to_scan):
@@ -41,17 +46,13 @@ def extract_text_from_pdf(file_path: str) -> str:
         return ""
     return "\n".join(all_text)
 
-def analyze_text_with_ollama(text: str, user_info: Optional[Dict] = None) -> Optional[Dict]:
+def analyze_text_with_ollama(text: str) -> Optional[Dict]:
     if not text:
         print("[AVISO] Texto vazio enviado para a IA.")
         return None
     
     start_time = time.time()
     prompt_text = text[:3000] # Qwen 2.5 aguenta um pouco mais de contexto
-    
-    # Preparação dos dados do Diretor (fallback)
-    d_nome = user_info.get('diretor_responsavel', 'Não informado') if user_info else 'Não informado'
-    d_email = user_info.get('diretor_responsavel_email', 'Não informado') if user_info else 'Não informado'
 
     # System Prompt simplificado para evitar confusão no modelo 3b
     system_prompt = """
