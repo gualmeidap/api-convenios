@@ -1,4 +1,5 @@
 from flask import Flask, redirect, url_for
+from flask.cli import load_dotenv
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_migrate import Migrate
 from db import db
@@ -9,6 +10,8 @@ from flask_mail import Mail, Message
 from routes.routes_user import user_bp
 from routes.routes_convenio import convenio_bp
 
+load_dotenv()
+
 app = Flask(__name__)
 
 # --- Configurações Básicas ---
@@ -16,14 +19,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhos
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads') 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'uma-chave-secreta-muito-segura')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
 # --- Configuração do Flask-Mail ---
-app.config['MAIL_SERVER'] = 'smtp.office365.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('FLASK_MAIL_USERNAME', 'convenios.uniesp@uniesp.edu.br')
-app.config['MAIL_PASSWORD'] = os.environ.get('FLASK_MAIL_PASSWORD', 'mudar@123')
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.office365.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True') == 'True'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 mail = Mail(app)
 
 # --- Inicialização de Extensões ---
