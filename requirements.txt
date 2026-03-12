@@ -3,6 +3,8 @@ Flask-Login
 Flask-Migrate
 Flask-Mail
 Flask-SQLAlchemy
+flask_wtf
+python-dotenv
 psycopg2-binary
 Werkzeug
 requests # Para comunicação com o Ollama

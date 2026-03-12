@@ -10,7 +10,7 @@ from typing import Optional, Dict
 
 # Configurações
 OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "qwen2.5:3b"
+OLLAMA_MODEL = "llama3.2"
 
 def extract_text_from_pdf(file_path: str) -> str:
     all_text = []
@@ -20,14 +20,8 @@ def extract_text_from_pdf(file_path: str) -> str:
         with pdfplumber.open(file_path) as pdf:
             if not pdf.pages:
                 raise ValueError("PDF não contém páginas")
-            pages_to_scan = []
-            
-            pages_to_scan.append(pdf.pages[-1])
 
-            if len(pdf.pages) > 1:
-                pages_to_scan.append(pdf.pages[-2])
-
-            for i, page in enumerate(pages_to_scan):
+            for i, page in enumerate(pdf.pages):
                 text = page.extract_text()
                 if text and len(text.strip()) > 100:
                     print(f"[DEBUG] Texto extraído via PDFPlumber na página {i}")
@@ -40,7 +34,7 @@ def extract_text_from_pdf(file_path: str) -> str:
                     print(ocr_text[:1000], "\n---\n")
                     all_text.append(ocr_text)
                     
-        print(f"[DEBUG] Extração concluída em {time.time() - start_time:.2f}s")
+        print(f"[DEBUG] Extração d e{len(pdf.pages)} páginasconcluída em {time.time() - start_time:.2f}s")
     except Exception as e:
         print(f"[ERRO] Falha na extração do PDF: {str(e)}")
         return ""
@@ -52,7 +46,7 @@ def analyze_text_with_ollama(text: str) -> Optional[Dict]:
         return None
     
     start_time = time.time()
-    prompt_text = text[:3000] # Qwen 2.5 aguenta um pouco mais de contexto
+    prompt_text = text[:6000]
 
     # System Prompt simplificado para evitar confusão no modelo 3b
     system_prompt = """
@@ -76,6 +70,12 @@ def analyze_text_with_ollama(text: str) -> Optional[Dict]:
         diretor_responsavel:
         diretor_responsavel_email:
         data_assinatura (aaaa-mm-dd)
+
+        CAMPO CRÍTICO:
+        data_validade (Procure por cláusulas de 'Vigência', 'Validade' ou 'Prazo'). 
+        Retorne no formato aaaa-mm-dd. 
+        Se o contrato for por tempo indeterminado, retorne '9999-12-31'.
+        Se não encontrar, retorne null.
     """
 
     payload = {
@@ -86,7 +86,7 @@ def analyze_text_with_ollama(text: str) -> Optional[Dict]:
         "format": "json", # FORÇA O OLLAMA A ENTREGAR JSON
         "options": {
             "temperature": 0,
-            "num_predict": 500,
+            "num_predict": 800,
             "top_k": 20,
             "top_p": 0.9
         }
@@ -95,7 +95,7 @@ def analyze_text_with_ollama(text: str) -> Optional[Dict]:
     try:
         print(f"[DEBUG] Enviando para Ollama ({OLLAMA_MODEL})...")
         # Timeout de 120s é geralmente suficiente para o Qwen 3b local
-        response = requests.post(OLLAMA_URL, json=payload, timeout=120)
+        response = requests.post(OLLAMA_URL, json=payload, timeout=150)
         
         if response.status_code != 200:
             print(f"[ERRO] Ollama retornou status {response.status_code}: {response.text}")
