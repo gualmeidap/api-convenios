@@ -52,6 +52,7 @@ class Convenios(db.Model):
     diretor_responsavel = db.Column(db.String(255), nullable=False)
     diretor_responsavel_email = db.Column(db.String(255), nullable=True)
     data_assinatura = db.Column(db.Date, nullable=False)
+    data_validade = db.Column(db.Date, nullable=True)
     observacoes = db.Column(TEXT(), nullable=True)
     caminho_arquivo_pdf = db.Column(db.String(512), nullable=True)
     status = db.Column(db.Enum(ConvenioStatus), nullable=False)
@@ -81,6 +82,7 @@ class Convenios(db.Model):
             'diretor_responsavel': self.diretor_responsavel,
             'diretor_responsavel_email': self.diretor_responsavel_email,
             'data_assinatura': self.data_assinatura.isoformat() if self.data_assinatura else None,
+            'data_validade': self.data_validade.isoformat() if self.data_validade else None,
             'observacoes': self.observacoes,
             'caminho_arquivo_pdf': self.caminho_arquivo_pdf,
             'status': self.status.value,

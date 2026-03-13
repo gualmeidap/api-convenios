@@ -31,10 +31,8 @@
     <!-- Área de Alertas -->
     <div id="alert-container" class="px-6 md:px-10 pt-6 hidden"></div>
 
-    <!-- O formulário aponta para a rota POST de cadastro -->
     <form id="convenioForm" class="p-6 md:p-10 space-y-12" enctype="multipart/form-data">
         
-        <!-- Campo oculto para armazenar o caminho do arquivo temporário da IA -->
         <input type="hidden" id="temp_file_path" name="temp_file_path">
 
         <!-- PASSO 1: UPLOAD E PROCESSAMENTO -->
@@ -45,7 +43,6 @@
             </div>
             
             <div id="drop-zone" class="bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center transition-all relative">
-                <!-- Note o name="caminho_arquivo_pdf" para bater com o seu backend -->
                 <input type="file" id="caminho_arquivo_pdf" name="caminho_arquivo_pdf" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
                 <div id="upload-ui-default">
                     <div class="mx-auto w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
@@ -55,7 +52,6 @@
                     <p class="text-sm text-indigo-500">O sistema analisará o documento. Você poderá revisar os dados abaixo.</p>
                 </div>
 
-                <!-- UI de Processamento -->
                 <div id="upload-ui-processing" class="hidden space-y-4">
                     <div class="flex justify-center">
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
@@ -77,42 +73,42 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="md:col-span-2">
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">Razão Social</label>
-                        <input type="text" id="nome_conveniada" name="nome_conveniada" required class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="text" id="nome_conveniada" name="nome_conveniada" required class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">CNPJ</label>
-                        <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" required class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" required class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">Nome Fantasia</label>
-                        <input type="text" id="nome_fantasia" name="nome_fantasia" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="text" id="nome_fantasia" name="nome_fantasia" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">Área de Atuação</label>
-                        <input type="text" id="area_atuacao" name="area_atuacao" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="text" id="area_atuacao" name="area_atuacao" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div class="grid grid-cols-3 gap-3">
                         <div class="col-span-2">
                             <label class="block text-xs font-black text-gray-500 uppercase mb-1">Cidade</label>
-                            <input type="text" id="cidade" name="cidade" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                            <input type="text" id="cidade" name="cidade" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                         </div>
                         <div>
                             <label class="block text-xs font-black text-gray-500 uppercase mb-1">UF</label>
-                            <input type="text" id="estado" name="estado" maxlength="2" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 text-center uppercase font-bold">
+                            <input type="text" id="estado" name="estado" maxlength="2" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 text-center uppercase font-bold focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-xs font-black text-gray-500 uppercase mb-1">Func.</label>
-                            <input type="number" id="qtd_funcionarios" name="qtd_funcionarios" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                            <input type="number" id="qtd_funcionarios" name="qtd_funcionarios" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                         </div>
                         <div>
                             <label class="block text-xs font-black text-gray-500 uppercase mb-1">Assoc.</label>
-                            <input type="number" id="qtd_associados" name="qtd_associados" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                            <input type="number" id="qtd_associados" name="qtd_associados" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                         </div>
                         <div>
                             <label class="block text-xs font-black text-gray-500 uppercase mb-1">Sind.</label>
-                            <input type="number" id="qtd_sindicalizados" name="qtd_sindicalizados" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                            <input type="number" id="qtd_sindicalizados" name="qtd_sindicalizados" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                         </div>
                     </div>
                 </div>
@@ -126,19 +122,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="lg:col-span-2">
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">Nome Completo</label>
-                        <input type="text" id="responsavel_legal" name="responsavel_legal" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="text" id="responsavel_legal" name="responsavel_legal" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">Cargo</label>
-                        <input type="text" id="cargo_responsavel" name="cargo_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="text" id="cargo_responsavel" name="cargo_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">Telefone</label>
-                        <input type="tel" id="telefone_responsavel" name="telefone_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="tel" id="telefone_responsavel" name="telefone_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div class="lg:col-span-4">
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">E-mail Corporativo</label>
-                        <input type="email" id="email_responsavel" name="email_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="email" id="email_responsavel" name="email_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                 </div>
             </section>
@@ -146,29 +142,35 @@
             <!-- UNIESP -->
             <section class="space-y-6">
                 <div class="flex items-center border-b border-gray-100 pb-3">
-                    <h2 class="text-lg font-bold text-gray-700">Dados UNIESP e Assinatura</h2>
+                    <h2 class="text-lg font-bold text-gray-700">Dados UNIESP e Vigência</h2>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">Unidade Responsável</label>
-                        <input type="text" id="unidade_uniesp" name="unidade_uniesp" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="text" id="unidade_uniesp" name="unidade_uniesp" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">Diretor Responsável</label>
-                        <input type="text" id="diretor_responsavel" name="diretor_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="text" id="diretor_responsavel" name="diretor_responsavel" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-black text-gray-500 uppercase mb-1">E-mail do Diretor</label>
-                        <input type="email" id="diretor_responsavel_email" name="diretor_responsavel_email" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                        <input type="email" id="diretor_responsavel_email" name="diretor_responsavel_email" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    
+                    <!-- Linha com Datas e Status -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label class="block text-xs font-black text-gray-500 uppercase mb-1">Data Assinatura</label>
-                            <input type="date" id="data_assinatura" name="data_assinatura" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50">
+                            <input type="date" id="data_assinatura" name="data_assinatura" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Data Validade</label>
+                            <input type="date" id="data_validade" name="data_validade" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                         </div>
                         <div>
                             <label class="block text-xs font-black text-gray-500 uppercase mb-1">Status</label>
-                            <select id="status" name="status" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 font-bold">
+                            <select id="status" name="status" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 font-bold focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
                                 <option value="ativo">Ativo</option>
                                 <option value="rescindido">Rescindido</option>
                                 <option value="expirado">Expirado</option>
@@ -178,7 +180,7 @@
                 </div>
                 <div class="mt-4">
                     <label class="block text-xs font-black text-gray-500 uppercase mb-1">Observações Internas <span class="font-normal text-gray-400">(Opcional)</span></label>
-                    <textarea id="observacoes" name="observacoes" rows="3" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50"></textarea>
+                    <textarea id="observacoes" name="observacoes" rows="3" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 outline-none transition-all"></textarea>
                 </div>
             </section>
         </div>
@@ -192,7 +194,6 @@
 </div>
 
 <script>
-    // Configurações de Rota (Ajustado para o seu Blueprint)
     const IA_PROCESS_ENDPOINT = "/processar_ia"; 
     const SAVE_ENDPOINT = "/convenio";
 
@@ -204,6 +205,7 @@
     const formFieldsContainer = document.getElementById('form-fields-container');
     const convenioForm = document.getElementById('convenioForm');
 
+    // Mapeamento ATUALIZADO com data_validade
     const fieldMap = {
         nome_conveniada: document.getElementById('nome_conveniada'),
         cnpj: document.getElementById('cnpj'),
@@ -222,7 +224,9 @@
         diretor_responsavel: document.getElementById('diretor_responsavel'),
         diretor_responsavel_email: document.getElementById('diretor_responsavel_email'),
         data_assinatura: document.getElementById('data_assinatura'),
-        observacoes: document.getElementById('observacoes')
+        data_validade: document.getElementById('data_validade'), // Novo campo mapeado
+        observacoes: document.getElementById('observacoes'),
+        status: document.getElementById('status')
     };
 
     function showAlert(message, type = 'error') {
@@ -237,7 +241,6 @@
         if(type === 'error') window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    // LISTENER PARA ANÁLISE DE IA
     fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -248,14 +251,13 @@
             return;
         }
 
-        // Feedback Visual Início
         uploadUiDefault.classList.add('hidden');
         uploadUiProcessing.classList.remove('hidden');
         formFieldsContainer.classList.add('opacity-30', 'pointer-events-none');
         alertContainer.classList.add('hidden');
 
         const formData = new FormData();
-        formData.append('caminho_arquivo_pdf', file); // Nome bate com o processar_ia do backend
+        formData.append('caminho_arquivo_pdf', file);
 
         try {
             const response = await fetch(IA_PROCESS_ENDPOINT, {
@@ -267,11 +269,8 @@
             
             if (result.success) {
                 const data = result.dados_sugeridos;
-                
-                // Armazena o caminho temporário retornado pela IA no campo oculto
                 tempFilePathInput.value = result.temp_file_path;
 
-                // Preenchimento dos campos
                 Object.keys(data).forEach(key => {
                     const input = fieldMap[key];
                     if (input) {
@@ -294,7 +293,6 @@
         }
     });
 
-    // MÁSCARA CNPJ
     fieldMap.cnpj.addEventListener('input', (e) => {
         let v = e.target.value.replace(/\D/g, '').slice(0, 14);
         v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
@@ -302,7 +300,6 @@
         e.target.value = v;
     });
 
-    // ENVIO FINAL DO FORMULÁRIO
     convenioForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -323,7 +320,6 @@
             });
 
             if (response.redirected) {
-                // Se o backend redirecionar (url_for), seguimos o redirecionamento
                 window.location.href = response.url;
                 return;
             }

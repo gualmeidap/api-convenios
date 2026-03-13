@@ -69,13 +69,14 @@ def analyze_text_with_ollama(text: str) -> Optional[Dict]:
         unidade_uniesp
         diretor_responsavel:
         diretor_responsavel_email:
-        data_assinatura (aaaa-mm-dd)
-
-        CAMPO CRÍTICO:
-        data_validade (Procure por cláusulas de 'Vigência', 'Validade' ou 'Prazo'). 
-        Retorne no formato aaaa-mm-dd. 
-        Se o contrato for por tempo indeterminado, retorne '9999-12-31'.
-        Se não encontrar, retorne null.
+        data_assinatura:
+        Data de assinatura do documento.
+        Procurar próximo de "(data) - ASSINATURA".
+        Retornar no formato ISO: YYYY-MM-DD.
+        data_validade:
+        Data final de validade do convênio.
+        Retornar no formato ISO: YYYY-MM-DD.
+        Se o contrato for por tempo indeterminado ou não possuir data final, retornar "9999-12-31".
     """
 
     payload = {
