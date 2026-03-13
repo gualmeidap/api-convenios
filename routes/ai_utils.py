@@ -74,7 +74,7 @@ def analyze_text_with_ollama(text: str) -> Optional[Dict]:
         Procurar próximo de "(data) - ASSINATURA".
         Retornar no formato ISO: YYYY-MM-DD.
         data_validade:
-        Data final de validade do convênio.
+        Data final de validade do convênio, procurar por "prazo".
         Retornar no formato ISO: YYYY-MM-DD.
         Se o contrato for por tempo indeterminado ou não possuir data final, retornar "9999-12-31".
     """

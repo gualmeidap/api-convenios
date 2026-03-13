@@ -194,22 +194,21 @@ def adicionar_convenio():
         diretor_responsavel_email = get_field('diretor_responsavel_email')
         observacoes = get_field('observacoes')
         
-        # Tratamento especial para Data e Status (Date/Enums objetcts)
-        print("Processando data de assinatura")
-        data_assinatura_str = request.form.get('data_assinatura')
-        data_assinatura = None
-        if data_assinatura_str and data_assinatura_str.strip() != "":
-            try:
-                # Tenta converter a string da data
-                data_assinatura = datetime.strptime(data_assinatura_str, '%Y-%m-%d').date()
-                #print(f"Data convertida: {data_assinatura}")
-            except:
-                try: data_assinatura = datetime.strptime(data_assinatura_str, '%d-%m-%Y').date()
-                except: print("Erro ao converter data")
-                traceback.print_exc()
+        # Processamento especial para datas
+        print('Processando datas...')
+        def parse_date(date_str):
+            if date_str:
+                try:
+                    return datetime.strptime(date_str, '%Y-%m-%d').date()
+                except:
+                    try: return datetime.strptime(date_str, '%d-%m-%Y').date()
+                    except: return None
+            return None
         
+        data_validade = parse_date(request.form.get('data_validade'))
+        data_assinatura = parse_date(request.form.get('data_assinatura'))
+
         # --- Alteração para garantir minúsculas no status, se houver valor ---
-        print("Processando status")
         status_str = request.form.get('status')
         status = None
         if status_str:
@@ -241,6 +240,7 @@ def adicionar_convenio():
             diretor_responsavel=diretor_responsavel,
             diretor_responsavel_email=diretor_responsavel_email,
             data_assinatura=data_assinatura,
+            data_validade=data_validade,
             observacoes=observacoes,
             caminho_arquivo_pdf=caminho_final,
             status=status
@@ -252,12 +252,19 @@ def adicionar_convenio():
         print("Convênio salvo com ID {novoConvenio.id}")
 
         # --- Lógica de Envio de E-mail ---
-        if diretor_responsavel_email:
+        if get_field('diretor_responsavel_email'):
+            if data_validade and data_validade.strftime('%Y-%m-%d') != '9999-12-31':
+                validade_txt = data_validade.strftime('%d/%m/%Y')
+            else:
+                validade_txt = "prazo indeterminado"
+
             print("Disparando e-mail para diretor")
             assunto = f"Nova Parceria Cadastrada - {nome_conveniada}"
             corpo = f"""Prezado(a) Diretor(a),\n\n
 Informamos que a unidade {unidade_uniesp} firmou nova parceria com a empresa {nome_conveniada},
 com benefícios educacionais válidos a partir de {data_assinatura.strftime('%d/%m/%Y')}.
+
+Vigência do convênio: {validade_txt}.
 
 Termo anexado: [https://uniespvestibular.com.br/convenios/]
 
@@ -330,7 +337,7 @@ def update_convenio(convenio_id):
             if value is None or value == '':
                 value = None 
 
-            if key == 'data_assinatura':
+            if key in ['data_assinatura', 'data_validade']:
                 if value:
                     setattr(convenio, key, datetime.strptime(value, '%Y-%m-%d').date())
                 else:
