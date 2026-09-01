@@ -86,11 +86,10 @@ http://127.0.0.1:8080
 ```
 ---
 ### ✅ Observações Importantes
-Ao iniciar o sistema pela primeira vez, um usuário admin é criado automaticamente com:
-
-Login/Email: admin@uniesp.edu.br
-
-Senha: 123456
+Ao iniciar o sistema pela primeira vez, um usuário admin é criado automaticamente a
+partir das variáveis de ambiente `ADMIN_EMAIL` e `ADMIN_PASSWORD`. Defina as duas
+antes da primeira execução — não há credencial padrão embutida, e o sistema não sobe
+sem elas.
 
 Diretório uploads/ armazena os PDFs enviados.
 
