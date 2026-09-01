@@ -59,28 +59,41 @@ app.register_blueprint(convenio_bp)
 # Bloco de inicialização do app
 if __name__ == '__main__':
     with app.app_context():
+        # Credenciais do admin inicial vêm do ambiente (.env) — nunca do código.
+        admin_email = os.getenv('ADMIN_EMAIL')
+        admin_password = os.getenv('ADMIN_PASSWORD')
+
         admin_user = User.query.filter_by(username='admin').first()
         
         # 1. Cria o usuário 'admin' se ele não existir
         if not admin_user:
+            if not admin_email or not admin_password:
+                raise SystemExit(
+                    "Defina ADMIN_EMAIL e ADMIN_PASSWORD (no .env ou no ambiente) antes "
+                    "da primeira execução: são as credenciais do admin inicial."
+                )
             print("Criando usuário 'admin' padrão...")
             # Adiciona o campo 'email' que é necessário para a autenticação/recuperação de senha.
             # Presume-se que o modelo User tenha o campo 'email'.
-            admin_user = User(username='admin', role='admin', email='admin@uniesp.edu.br')
-            admin_user.set_password('123456')
+            admin_user = User(username='admin', role='admin', email=admin_email)
+            admin_user.set_password(admin_password)
             db.session.add(admin_user)
             db.session.commit()
-            print("Usuário 'admin' criado com sucesso com email: admin@uniesp.edu.br")
+            print(f"Usuário 'admin' criado com sucesso com email: {admin_email}")
         
         # 2. Se o usuário 'admin' existir, mas estiver sem e-mail, atualiza
         else:
             # Tenta acessar o atributo 'email'. Se o modelo User não tiver este atributo,
             # esta linha pode falhar na inicialização do app.
             if not hasattr(admin_user, 'email') or not admin_user.email:
+                 if not admin_email:
+                     raise SystemExit(
+                         "O usuário 'admin' existe sem e-mail. Defina ADMIN_EMAIL para completá-lo."
+                     )
                  print("Atualizando email do usuário 'admin' existente...")
                  # Tenta adicionar/atualizar o campo email
-                 setattr(admin_user, 'email', 'admin@uniesp.edu.br')
+                 setattr(admin_user, 'email', admin_email)
                  db.session.commit()
-                 print("Email do usuário 'admin' atualizado com sucesso para: admin@uniesp.edu.br")
+                 print(f"Email do usuário 'admin' atualizado com sucesso para: {admin_email}")
     
     app.run(debug=True, port=8080, host='0.0.0.0')
