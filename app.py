@@ -4,11 +4,15 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_migrate import Migrate
 from db import db
 from models.convenios import AuditLog, Convenios, ConvenioStatus, User
+import logging
 import os
 from datetime import datetime
 from flask_mail import Mail, Message
 from routes.routes_user import user_bp
 from routes.routes_convenio import convenio_bp
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -72,14 +76,14 @@ if __name__ == '__main__':
                     "Defina ADMIN_EMAIL e ADMIN_PASSWORD (no .env ou no ambiente) antes "
                     "da primeira execução: são as credenciais do admin inicial."
                 )
-            print("Criando usuário 'admin' padrão...")
+            logger.info("Criando usuário 'admin' padrão...")
             # Adiciona o campo 'email' que é necessário para a autenticação/recuperação de senha.
             # Presume-se que o modelo User tenha o campo 'email'.
             admin_user = User(username='admin', role='admin', email=admin_email)
             admin_user.set_password(admin_password)
             db.session.add(admin_user)
             db.session.commit()
-            print(f"Usuário 'admin' criado com sucesso com email: {admin_email}")
+            logger.info("Usuário 'admin' criado com sucesso.")
         
         # 2. Se o usuário 'admin' existir, mas estiver sem e-mail, atualiza
         else:
@@ -90,10 +94,10 @@ if __name__ == '__main__':
                      raise SystemExit(
                          "O usuário 'admin' existe sem e-mail. Defina ADMIN_EMAIL para completá-lo."
                      )
-                 print("Atualizando email do usuário 'admin' existente...")
+                 logger.info("Atualizando email do usuário 'admin' existente...")
                  # Tenta adicionar/atualizar o campo email
                  setattr(admin_user, 'email', admin_email)
                  db.session.commit()
-                 print(f"Email do usuário 'admin' atualizado com sucesso para: {admin_email}")
+                 logger.info("Email do usuário 'admin' atualizado com sucesso.")
     
     app.run(debug=True, port=8080, host='0.0.0.0')

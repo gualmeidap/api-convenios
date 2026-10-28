@@ -1,0 +1,4 @@
+# Keep GitHub's language bar honest: templates and static assets are not the project's language.
+templates/** linguist-vendored
+static/** linguist-vendored
+docs/** linguist-documentation

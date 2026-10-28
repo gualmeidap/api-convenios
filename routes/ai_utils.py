@@ -1,3 +1,4 @@
+import logging
 import pdfplumber
 import pytesseract
 from PIL import Image
@@ -8,6 +9,8 @@ import re
 import time
 from typing import Optional, Dict
 
+logger = logging.getLogger(__name__)
+
 # Configurações
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "llama3.2"
@@ -16,7 +19,7 @@ def extract_text_from_pdf(file_path: str) -> str:
     all_text = []
     start_time = time.time()
     try:
-        print(f"[DEBUG] Abrindo PDF: {file_path}")
+        logger.debug(f"Abrindo PDF: {file_path}")
         with pdfplumber.open(file_path) as pdf:
             if not pdf.pages:
                 raise ValueError("PDF não contém páginas")
@@ -24,25 +27,23 @@ def extract_text_from_pdf(file_path: str) -> str:
             for i, page in enumerate(pdf.pages):
                 text = page.extract_text()
                 if text and len(text.strip()) > 100:
-                    print(f"[DEBUG] Texto extraído via PDFPlumber na página {i}")
+                    logger.debug(f"Texto extraído via PDFPlumber na página {i}")
                     all_text.append(text)
                 else:
-                    print(f"[DEBUG] Página {i} parece imagem, iniciando OCR...")
+                    logger.debug(f"Página {i} parece imagem, iniciando OCR...")
                     img = page.to_image(resolution=200).original
                     ocr_text = pytesseract.image_to_string(img, lang='por')
-                    print(f"[DEBUG] Texto extraído via OCR na página {i}:")
-                    print(ocr_text[:1000], "\n---\n")
                     all_text.append(ocr_text)
                     
-        print(f"[DEBUG] Extração d e{len(pdf.pages)} páginasconcluída em {time.time() - start_time:.2f}s")
+        logger.debug(f"Extração de {len(pdf.pages)} páginas concluída em {time.time() - start_time:.2f}s")
     except Exception as e:
-        print(f"[ERRO] Falha na extração do PDF: {str(e)}")
+        logger.error(f"Falha na extração do PDF: {str(e)}")
         return ""
     return "\n".join(all_text)
 
 def analyze_text_with_ollama(text: str) -> Optional[Dict]:
     if not text:
-        print("[AVISO] Texto vazio enviado para a IA.")
+        logger.warning("Texto vazio enviado para a IA.")
         return None
     
     start_time = time.time()
@@ -94,25 +95,25 @@ def analyze_text_with_ollama(text: str) -> Optional[Dict]:
     }
 
     try:
-        print(f"[DEBUG] Enviando para Ollama ({OLLAMA_MODEL})...")
+        logger.debug(f"Enviando para Ollama ({OLLAMA_MODEL})...")
         # Timeout de 120s é geralmente suficiente para o Qwen 3b local
         response = requests.post(OLLAMA_URL, json=payload, timeout=150)
         
         if response.status_code != 200:
-            print(f"[ERRO] Ollama retornou status {response.status_code}: {response.text}")
+            logger.error(f"Ollama retornou status {response.status_code}: {response.text}")
             return None
 
         full_response = response.json()
         raw_content = full_response.get('response', '')
         
-        print(f"[DEBUG] Resposta bruta da IA recebida ({len(raw_content)} chars)")
+        logger.debug(f"Resposta bruta da IA recebida ({len(raw_content)} chars)")
 
         # Tenta parsear diretamente já que usamos format: json
         try:
             data = json.loads(raw_content)
         except json.JSONDecodeError:
             # Fallback para regex se o JSON vier sujo
-            print("[AVISO] Falha no parse direto, tentando Regex...")
+            logger.warning("Falha no parse direto, tentando Regex...")
             clean_json_match = re.search(r'\{.*\}', raw_content, re.DOTALL)
             if clean_json_match:
                 data = json.loads(clean_json_match.group())
@@ -123,12 +124,12 @@ def analyze_text_with_ollama(text: str) -> Optional[Dict]:
         blacklist = ["n/a", "não encontrado", "null", "none", "", "undefined"]
         final_data = {k: v for k, v in data.items() if str(v).lower() not in blacklist and v}
         
-        print(f"[DEBUG] Análise concluída com sucesso em {time.time() - start_time:.2f}s")
+        logger.info(f"Análise concluída com sucesso em {time.time() - start_time:.2f}s")
         return final_data
 
     except requests.exceptions.Timeout:
-        print("[ERRO] Timeout: O Ollama demorou demais para responder. Verifique o consumo de CPU/GPU.")
+        logger.error("Timeout: O Ollama demorou demais para responder. Verifique o consumo de CPU/GPU.")
     except Exception as e:
-        print(f"[ERRO] Geral no analyze_text_with_ollama: {str(e)}")
+        logger.error(f"Geral no analyze_text_with_ollama: {str(e)}")
         
     return None
