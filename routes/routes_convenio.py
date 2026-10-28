@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 from db import db
 from models.convenios import AuditLog, Convenios, ConvenioStatus
 from datetime import datetime
+import logging
 import os
 import uuid
 from werkzeug.utils import secure_filename
@@ -11,6 +12,8 @@ from flask_mail import Mail, Message
 from routes.routes_user import role_required
 from routes.ai_utils import extract_text_from_pdf, analyze_text_with_ollama
 import traceback
+
+logger = logging.getLogger(__name__)
 
 # BLueprint de Convênios
 convenio_bp = Blueprint('convenio_bp', __name__)
@@ -24,7 +27,7 @@ def allowed_file(filename):
 # Função auxiliar para enviar e-mail
 def send_email(to_email, subject, body):
     from app import app, mail
-    print("Tentando enviar e-mail...")
+    logger.debug("Tentando enviar e-mail...")
     try:
         with app.app_context():
             msg = Message(subject,
@@ -32,10 +35,10 @@ def send_email(to_email, subject, body):
                         recipients=[to_email])
             msg.body = body
             mail.send(msg)
-            print(f"E-mail enviado com sucesso para {to_email}.")
+            logger.info(f"E-mail enviado com sucesso para {to_email}.")
             return True
     except Exception as e:
-        print(f"Erro ao enviar e-mail: {e}")
+        logger.error(f"Erro ao enviar e-mail: {e}")
         return False
 
 # --- Rotas de Visualização (Servindo HTML) ---
@@ -86,18 +89,18 @@ def processar_ia():
     arquivo = request.files['caminho_arquivo_pdf']
 
     if arquivo and allowed_file(arquivo.filename):
-        print("Arquivo recebido.")
+        logger.debug("Arquivo recebido.")
         try:
             # Salva temporariamente para leitura
-            print("Salvando arquivo temporário...")
+            logger.debug("Salvando arquivo temporário...")
             nome_seguro = secure_filename(arquivo.filename)
             nome_unico = f"temp_{uuid.uuid4()}_{nome_seguro}"
             caminho_temp = os.path.join(app.config['UPLOAD_FOLDER'], nome_unico)
             arquivo.save(caminho_temp)
-            print("Arquivo temporário salvo.")
+            logger.debug("Arquivo temporário salvo.")
 
             # Extração e Análise
-            print("Extraindo texto do arquivo...")
+            logger.debug("Extraindo texto do arquivo...")
             texto_extraido = extract_text_from_pdf(caminho_temp)
 
             if not texto_extraido or texto_extraido.strip() == "":
@@ -106,10 +109,8 @@ def processar_ia():
                     'error': 'O PDF parece estar vazio ou é uma imagem sem texto legível.'
                 }), 422
 
-            print("Analisando texto extraído")
+            logger.debug("Analisando texto extraído")
             resultado_ai = analyze_text_with_ollama(texto_extraido)
-            print("\n--- Resultado Analisado pela IA ---")
-            print(resultado_ai)
 
             if resultado_ai is None:
                 return jsonify({
@@ -117,10 +118,8 @@ def processar_ia():
                     'error': 'A IA não conseguiu processar as informações deste documento.'
                 }), 500
 
-            print("Dados do diretor logado:")
             resultado_ai['diretor_responsavel'] = current_user.username
             resultado_ai['diretor_responsavel_email'] = current_user.email
-            print(f"Diretor: {resultado_ai['diretor_responsavel']}, Email: {resultado_ai['diretor_responsavel_email']}")
 
             # Retorna o caminho do arquivo e os dados para o frontend
             # O frontend deve guardar esse 'caminho_temp' para enviar no POST final
@@ -143,7 +142,7 @@ def processar_ia():
 def adicionar_convenio():
     from app import app, mail
 
-    print("Iniciando rota: adicionar_convenio")
+    logger.debug("Iniciando rota: adicionar_convenio")
 
     try:
         caminho_final = None
@@ -195,7 +194,7 @@ def adicionar_convenio():
         observacoes = get_field('observacoes')
         
         # Processamento especial para datas
-        print('Processando datas...')
+        logger.debug('Processando datas...')
         def parse_date(date_str):
             if date_str:
                 try:
@@ -215,12 +214,12 @@ def adicionar_convenio():
             status_lower = status_str.lower()
             if status_lower in [e.value for e in ConvenioStatus]:
                 status = ConvenioStatus(status_lower)
-                print(f"Status definido: {status}")
+                logger.debug(f"Status definido: {status}")
             else:
-                print(f"Status inválido recebido: {status_str}")
+                logger.warning(f"Status inválido recebido: {status_str}")
 
         # Cria o novo objeto Convenios
-        print("Criando objeto Convenios")
+        logger.debug("Criando objeto Convenios")
         novoConvenio = Convenios(
             user_id=current_user.id, # Associa o convênio ao ID do usuário logado
             nome_conveniada=nome_conveniada,
@@ -246,10 +245,10 @@ def adicionar_convenio():
             status=status
         )
         
-        print("Salvando convênio no banco")
+        logger.debug("Salvando convênio no banco")
         db.session.add(novoConvenio)
         db.session.commit()
-        print("Convênio salvo com ID {novoConvenio.id}")
+        logger.debug(f"Convênio salvo com ID {novoConvenio.id}")
 
         # --- Lógica de Envio de E-mail ---
         if get_field('diretor_responsavel_email'):
@@ -258,7 +257,7 @@ def adicionar_convenio():
             else:
                 validade_txt = "prazo indeterminado"
 
-            print("Disparando e-mail para diretor")
+            logger.debug("Disparando e-mail para diretor")
             assunto = f"Nova Parceria Cadastrada - {nome_conveniada}"
             corpo = f"""Prezado(a) Diretor(a),\n\n
 Informamos que a unidade {unidade_uniesp} firmou nova parceria com a empresa {nome_conveniada},
@@ -275,7 +274,7 @@ Equipe UNIESP"""
         # --- Fim da Lógica de E-mail ---
 
         # --- LOG DE AUDITORIA: Ação de Criação ---
-        print("Criando log de auditoria")
+        logger.debug("Criando log de auditoria")
         log_entry = AuditLog(
             user=current_user,
             action='CREATE',
@@ -285,16 +284,16 @@ Equipe UNIESP"""
         )
         db.session.add(log_entry)
         db.session.commit()
-        print("Log de auditoria salvo")
+        logger.debug("Log de auditoria salvo")
         # --- FIM DO LOG DE AUDITORIA ---
         
         # Redireciona o usuário para a página de visualização após o sucesso
-        print("Rota finalizada com sucesso")
+        logger.debug("Rota finalizada com sucesso")
         flash('Convênio inserido com sucesso!')
         return redirect(url_for('convenio_bp.visualizar_convenios'))
 
     except Exception:
-        print("Erro geral da rota adicionar_convenio")
+        logger.exception("Erro geral da rota adicionar_convenio")
         traceback.print_exc()
         db.session.rollback()
         return jsonify({'error': 'Erro interno ao cadastrar convênio'}), 500
@@ -328,7 +327,6 @@ def update_convenio(convenio_id):
         else:
             data = request.form
 
-        print(f"DEBUG: Dados recebidos para atualização do Convênio {convenio_id}: {data}") # Log de debug
         
         # Itera sobre os dados recebidos para atualizar o convênio
         for key, value in data.items():
@@ -343,7 +341,7 @@ def update_convenio(convenio_id):
                 else:
                     setattr(convenio, key, None)
             elif key == 'status':
-                print(f"DEBUG STATUS: Tentando processar status. Valor recebido: '{value}'") # Log de debug específico
+                logger.debug(f"Tentando processar status. Valor recebido: '{value}'")
 
                 # Só tenta processar se o valor não for None (ou seja, se o campo veio na requisição)
                 if value:
@@ -353,11 +351,11 @@ def update_convenio(convenio_id):
                     # Verifica se o valor minúsculo é válido no Enum
                     if status_value_lower in [e.value for e in ConvenioStatus]:
                         setattr(convenio, key, ConvenioStatus(status_value_lower))
-                        print(f"DEBUG STATUS: Status alterado com sucesso para: {status_value_lower}")
+                        logger.info(f"Status alterado com sucesso para: {status_value_lower}")
                     else:
-                        print(f"ERRO DE VALIDAÇÃO: Valor '{value}' não é um status válido. Ignorando atualização de status.")
+                        logger.warning(f"Valor '{value}' não é um status válido. Ignorando atualização de status.")
                 else:
-                    print("DEBUG STATUS: Valor do status recebido está vazio ou nulo. Nenhuma alteração de status.")
+                    logger.debug("Valor do status recebido está vazio ou nulo. Nenhuma alteração de status.")
 
             elif key in ['qtd_funcionarios', 'qtd_associados', 'qtd_sindicalizados']:
                 if value is not None:
