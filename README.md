@@ -1,100 +1,48 @@
-# 📑 Gerenciador de Convênios UNIESP
+# Partnership Management System
 
-Sistema web para gerenciamento de convênios, com autenticação, controle de permissões e auditoria de ações. Desenvolvido em **Flask** com base em perfis de acesso (`admin` e `diretor`).
+> **English summary:** back-end platform for managing partnership agreements (convênios). PDFs are parsed with `pdfplumber`; pages that come back empty fall through to Tesseract OCR, so the expensive path only runs when needed. Extracted text is analysed by a locally hosted LLM (Ollama, `llama3.2`) that is forced to return JSON. Includes role-based access (`admin` / `diretor`) and an audit log of every action. Stack: Python, Flask, SQLAlchemy, PostgreSQL, Alembic migrations.
 
----
+Sistema web para gerenciamento de convênios, com autenticação, controle de permissões, extração de dados de PDFs (texto + OCR) e análise por LLM local. Substituiu planilhas e fluxos manuais por um sistema único e auditável.
 
-## ✅ Tecnologias Utilizadas
+## Tecnologias
 
-- Python 3.x  
-- Flask  
-- Flask-Login  
-- Flask-Migrate  
-- Flask-Mail  
-- SQLAlchemy  
-- PostgreSQL
+Python 3 · Flask · Flask-Login · Flask-Migrate · Flask-Mail · SQLAlchemy · PostgreSQL · pdfplumber · Tesseract OCR · Ollama
 
----
+## Como funciona a extração
 
-## ✅ Estrutura Geral do Projeto
+1. O PDF enviado é lido com `pdfplumber`.
+2. Páginas sem texto (digitalizadas) passam pelo OCR (Tesseract, `por`).
+3. O texto vai para o Ollama local, com saída forçada em JSON.
+4. Os campos extraídos preenchem o cadastro do convênio.
 
-<pre>
-api-convenios/
-│
-├── app.py
-├── db.py
-├── models/
-│ ├── __init__.py
-│ └── convenios.py
-├── routes/
-│ ├── __init__.py
-│ ├── routes_user.py
-│ └── routes_convenio.py
-├── templates/
-│ ├── index.html
-│ ├── login.html
-│ ├── register.html
-│ ├── visualizador_logs_auditoria.html
-│ ├── visualizar_convenios.html
-│ └── visualizar_usuarios.html
-├── uploads/
-├── migrations/
-└── requirements.txt
-</pre>
+## Permissões
 
----
+| Perfil | Pode |
+|---|---|
+| `admin` | criar, editar e excluir convênios; gerenciar usuários; ver o log de auditoria |
+| `diretor` | visualizar e cadastrar convênios |
 
-## ✅ Instalação e Execução
----
-### 1️⃣ Criar e ativar um ambiente virtual (opcional)
+## Estrutura
+
+```
+app.py            aplicação Flask
+db.py             conexão com o banco
+models/           modelos SQLAlchemy
+routes/           rotas de convênios, usuários e utilitários de IA
+templates/        telas
+migrations/       migrações Alembic
+```
+
+## Como rodar
 
 ```bash
 python -m venv venv
-```
-#### Windows:
-```bash
-venv\Scripts\activate
-```
-#### Linux/Mac:
-```bash
-source venv/bin/activate
-```
----
-### 2️⃣ Instalar dependências
-
-```bash
+venv\Scripts\activate        # Windows  (Linux/Mac: source venv/bin/activate)
 pip install -r requirements.txt
 ```
----
-### 3️⃣ Configurar Banco de Dados
 
-Certifique-se de que o PostgreSQL está rodando e que a base de dados indicada no app.py existe:
+Requisitos: PostgreSQL rodando, Tesseract instalado e o Ollama com o modelo `llama3.2`. Defina as variáveis `ADMIN_EMAIL` e `ADMIN_PASSWORD` antes da primeira execução: o usuário admin é criado a partir delas e não há credencial padrão embutida.
 
 ```bash
-postgresql://postgres:postgres@localhost:5432/termos
+python app.py     # http://127.0.0.1:8080
 ```
----
-### 4️⃣ Rodar o projeto
-
-```bash
-python app.py
-```
-Por padrão, o app sobe em:
-
-```cpp
-http://127.0.0.1:8080
-```
----
-### ✅ Observações Importantes
-Ao iniciar o sistema pela primeira vez, um usuário admin é criado automaticamente a
-partir das variáveis de ambiente `ADMIN_EMAIL` e `ADMIN_PASSWORD`. Defina as duas
-antes da primeira execução — não há credencial padrão embutida, e o sistema não sobe
-sem elas.
-
-Diretório uploads/ armazena os PDFs enviados.
-
-Permissões:
-
-admin → criar, editar, excluir convênios, gerenciar usuários e visualizar log de auditoria
-
-diretor → apenas visualizar e cadastrar convênios
