@@ -1,39 +1,41 @@
+> 🇧🇷 [Versão em português](README.pt-BR.md)
+
 # Partnership Management System
 
-> **English summary:** back-end platform for managing partnership agreements (convênios). PDFs are parsed with `pdfplumber`; pages that come back empty fall through to Tesseract OCR, so the expensive path only runs when needed. Extracted text is analysed by a locally hosted LLM (Ollama, `llama3.2`) that is forced to return JSON. Includes role-based access (`admin` / `diretor`) and an audit log of every action. Stack: Python, Flask, SQLAlchemy, PostgreSQL, Alembic migrations.
+Web system for managing partnership agreements (*convênios*), with authentication, role-based permissions, PDF data extraction (text + OCR) and analysis by a locally hosted LLM. It replaced spreadsheets and manual workflows with a single, auditable system.
 
-Sistema web para gerenciamento de convênios, com autenticação, controle de permissões, extração de dados de PDFs (texto + OCR) e análise por LLM local. Substituiu planilhas e fluxos manuais por um sistema único e auditável.
-
-## Tecnologias
+## Stack
 
 Python 3 · Flask · Flask-Login · Flask-Migrate · Flask-Mail · SQLAlchemy · PostgreSQL · pdfplumber · Tesseract OCR · Ollama
 
-## Como funciona a extração
+## How extraction works
 
-1. O PDF enviado é lido com `pdfplumber`.
-2. Páginas sem texto (digitalizadas) passam pelo OCR (Tesseract, `por`).
-3. O texto vai para o Ollama local, com saída forçada em JSON.
-4. Os campos extraídos preenchem o cadastro do convênio.
+1. The uploaded PDF is read with `pdfplumber`.
+2. Pages with no text (scanned) fall through to OCR (Tesseract, `por`), so the expensive path only runs when needed.
+3. The text goes to a local Ollama model, with the output forced into JSON.
+4. The extracted fields fill in the agreement record.
 
-## Permissões
+## Permissions
 
-| Perfil | Pode |
+| Role | Can |
 |---|---|
-| `admin` | criar, editar e excluir convênios; gerenciar usuários; ver o log de auditoria |
-| `diretor` | visualizar e cadastrar convênios |
+| `admin` | create, edit and delete agreements; manage users; view the audit log |
+| `diretor` | view and register agreements |
 
-## Estrutura
+Every action is recorded in an audit log.
+
+## Layout
 
 ```
-app.py            aplicação Flask
-db.py             conexão com o banco
-models/           modelos SQLAlchemy
-routes/           rotas de convênios, usuários e utilitários de IA
-templates/        telas
-migrations/       migrações Alembic
+app.py            Flask application
+db.py             database connection
+models/           SQLAlchemy models
+routes/           routes for agreements, users and AI helpers
+templates/        screens
+migrations/       Alembic migrations
 ```
 
-## Como rodar
+## Running it
 
 ```bash
 python -m venv venv
@@ -41,7 +43,7 @@ venv\Scripts\activate        # Windows  (Linux/Mac: source venv/bin/activate)
 pip install -r requirements.txt
 ```
 
-Requisitos: PostgreSQL rodando, Tesseract instalado e o Ollama com o modelo `llama3.2`. Defina as variáveis `ADMIN_EMAIL` e `ADMIN_PASSWORD` antes da primeira execução: o usuário admin é criado a partir delas e não há credencial padrão embutida.
+Requirements: a running PostgreSQL, Tesseract installed, and Ollama with the `llama3.2` model. Set the `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables before the first run: the admin user is created from them, and there is no built-in default credential.
 
 ```bash
 python app.py     # http://127.0.0.1:8080
