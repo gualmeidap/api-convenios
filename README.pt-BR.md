@@ -1,4 +1,4 @@
-> 🇺🇸 [English version](README.md)
+[![English](https://img.shields.io/badge/English-lightgrey?style=for-the-badge)](README.md) [![Português](https://img.shields.io/badge/Portugu%C3%AAs-0A66C2?style=for-the-badge)](README.pt-BR.md)
 
 # Sistema de Gestão de Convênios
 
